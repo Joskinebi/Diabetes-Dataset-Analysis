@@ -1,0 +1,469 @@
+---
+title: "Analysis of Diabetes Health Indicators / Dataset by Behavioral Risk Factor Surveillance System"
+author: "Juan José Tirado Pulido / Sheddad"
+note: "The survey was established in 1984. Data are collected monthly in all 50 states, Puerto Rico, the U.S. Virgin islands, and Guam."
+date: "January 2023"
+output: 
+  cleanrmd::html_document_clean: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: water-dark
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library('ggplot2')
+```
+
+# General questions
+
+This questions were proposed in the website ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset))) 
+
+ * Can survey questions from the BRFSS provide accurate predictions of whether an individual has diabetes?
+ * What risk factors are most predictive of diabetes risk?
+ * Can we use a subset of the risk factors to accurately predict whether an individual has diabetes?
+ * Can we create a short form of questions from the BRFSS using feature selection to accurately predict if someone might have diabetes or is at high risk of diabetes?
+
+First of all we will explore the dataset and by the end of the study we will be able to answer them accurately.
+
+
+# Section 1
+
+## 1.1
+
+Let's explore the kind of files that will be imported and the relevant variables 
+of study
+
+```{r}
+diabetes_dataset <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
+                             header=TRUE)
+names(diabetes_dataset)
+```
+The variables are:
+
+ * Diabetes_012: 0 = no diabetes 1 = prediabetes 2 = diabetes
+ 
+ * HighBP: 0 = no high BP 1 = high BP
+ 
+ * HighChol: 0 = no high cholesterol 1 = high cholesterol
+ 
+ * CholCheck: 0 = no cholesterol check in 5 years 1 = yes cholesterol check in 5 years
+ 
+ * BMI: Body Mass Index
+ 
+ * Smoker: Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes] 0 = no 1 = yes            
+ 
+ * Stroke: You ever had a stroke. 0 = no 1 = yes
+ 
+ * HeartDiseaseorAttack: coronary heart disease (CHD) or myocardial infarction (MI) 0 = no 1 = yes
+ 
+ * PhysActivity: physical activity in past 30 days - not including job 0 = no 1 = yes
+ 
+ * Fruits: Consume Fruit 1 or more times per day 0 = no 1 = yes
+ 
+ * Veggies: Consume Vegetables 1 or more times per day 0 = no 1 = yes   
+ 
+ * HvyAlcoholConsump: Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week) 0 = no 1 = yes
+ 
+ * AnyHealthcare: Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc. 0 = no 1 = yes
+ 
+ * NoDocbcCost: Was there a time in the past 12 months when you needed to see a doctor but could not because of cost? 0 = no 1 = yes
+ 
+ * GenHlth: Would you say that in general your health is: scale 1-5 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
+ 
+ * MentHlth: Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?
+ 
+ * PhysHlth: Now thinking about your physical health, which includes physical illness and injury, for how many days during the past 30 days was your physical health not good?
+ 
+ * DiffWalk: Do you have serious difficulty walking or climbing stairs? 0 = no 1 = yes     
+ 
+ * Sex: 0 = female 1 = male  
+ 
+ * Age: 13-level age category ([_AGEG5YR](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP))) 1 = 18-24 9 = 60-64 13 = 80 or older 
+ 
+ * Education: Education level ([EDUCA](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP))  scale 1-6 1 = Never attended school or only kindergarten 2 = Grades 1 through 8 
+
+ * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) scale 1-8, 1 = less than $10000, 5 = less than $35000, 8 = $75,000 or more
+
+
+```{r}
+#Diagrama de puntos las probabilidades de todos los valores hasta 10
+plot(dbinom(1:10, size = 100, prob = .08), type = "b", pch = 19)
+```
+
+## 1.2
+La distribución de Poisson expresa la probabilidad de que un cierto número de 
+eventos sucedan en un intervalo de espacio o tiempo fijo, si dichos eventos 
+ocurren con una media conocida y los eventos son independientes.
+
+En promedio, se producen 9 incidentes al mes que derivan en quemaduras, 
+intoxicaciones, etc. Por lo tanto lambda = 9.
+
+```{r}
+#Probabilidad de que, en un mes cualquiera, se produzcan 11 o más incidentes.
+media_incidentes <- 9
+numero_incidentes <- 10
+
+ppois(numero_incidentes, media_incidentes, lower.tail = FALSE)
+```
+La probabilidad de que haya 11 o más incidentes cuando la media es de 
+9 incidentes es 29.4%
+
+```{r}
+#Se pide también explicar a qué tipo de distribución corresponde y la 
+#representación gráfica de la distribución teniendo en cuenta la media, 
+#para un número determinado de valores (por ejemplo, 25).
+
+numero_incidentes <- 0:25
+media_incidentes <- 9
+
+plot(dpois(numero_incidentes, media_incidentes), type = "b", pch = 19)
+```
+
+
+## 1.3 
+
+Según los datos recogidos, un tratamiento abrasivo para el acné juvenil se 
+realiza en diferentes fases según la reacción del paciente, teniendo una 
+duración media de 25 días, y una desviación estándar de 5 días.
+
+### Apartado a
+
+```{r}
+(pnorm(27, mean = 25, sd = 5) - pnorm(22, mean = 25, sd = 5)) * 100
+```
+
+Para calcular la probabilidad de que el tratamiento se realize entre 
+22 y 27 días, restamos P(X <= 27 días) a P(X <= 22 días). Y nos da 38.12%
+
+### Apartado b
+
+```{r}
+dist_normal_acne <- rnorm(10000, mean = 25, sd = 5)
+mean(dist_normal_acne)
+```
+
+El valor medio es de 24.98
+
+### Apartado c
+
+```{r}
+hist(rnorm(10000, mean = 25, sd = 5))
+```
+Como podemos observar, se trata de una distribución normal. Si seguimos la regla 68-95-99.7 y siendo la media = 25 podemos observar que: 
+
+  + Un 68% de los resultados están a una desviación estándar de la media.
+  + Un 95% de los resultados están a dos desviaciones estándar de la media.
+  + Un 99.7% de los resultados están a tres desviaciones estándar de la media.
+
+# Sección 2
+
+## 2.1
+
+```{r}
+library(MASS)
+head(Aids2)
+str(Aids2)
+```
+Para poder hallar la correlación, las columnas que son factores deben ser pasadas a numeric.
+
+### Apartado a
+
+```{r}
+#Eliminando NA's
+Aids2 <- na.omit(Aids2)
+
+Aids2_numeric <- Aids2
+#Para poder hallar la correlación, tenemos que convertir en numéricos los datos que no lo son
+Aids2_numeric$state <- as.numeric(Aids2_numeric$state)
+Aids2_numeric$sex <- as.numeric(Aids2_numeric$sex)
+Aids2_numeric$status <- as.numeric(Aids2_numeric$status)
+Aids2_numeric$T.categ <- as.numeric(Aids2_numeric$T.categ)
+```
+
+### Apartado b
+
+```{r}
+#Funcion que devuelve un vector compuesto por el número de low outliers y el de
+#high outliers
+number_outliers_boxplot <- function(boxplot) {
+  outliers <- boxplot$out
+  upper_whisker <- boxplot$stats[5]
+  num_low_outliers <- length(which(outliers < upper_whisker))
+  num_high_outliers <- length(which(outliers > upper_whisker))
+  
+  return (c(num_low_outliers, num_high_outliers))
+}
+```
+
+```{r}
+survival_days <- Aids2$death - Aids2$diag
+bp_survival_days <- boxplot(survival_days, ylab = "Surviving days")
+
+#Obteniendo los quartiles
+q3 <- bp_survival_days$stats[4]
+q1 <- bp_survival_days$stats[2]
+
+q3
+q1
+
+# Obteniendo el número de high and low outliers
+num_low_outliers <- number_outliers_boxplot(bp_survival_days)[1]
+num_high_outliers <- number_outliers_boxplot(bp_survival_days)[2]
+
+num_low_outliers
+num_high_outliers
+```
+Aquí podemos ver un diagrama de cajas para los días que el paciente ha vivido 
+durante el estudio, cayendo un 50% de los valores entre 583 (Q3) y 128 días (Q1) 
+
+Como outliers tenemos: 
+
+  * Lower outlier: no hay ya que no se puede vivir -554.5 días
+  * High outlier: hay 79 personas en el estudio que han vivido más de 1265.5 días
+
+```{r}
+bp_age <- boxplot(Aids2$age)
+
+#Obteniendo los quartiles
+q3 <- bp_age$stats[4]
+q1 <- bp_age$stats[2]
+
+q3
+q1
+
+# Obteniendo el número de high and low outliers
+num_low_outliers <- number_outliers_boxplot(bp_age)[1]
+num_high_outliers <- number_outliers_boxplot(bp_age)[2]
+
+num_low_outliers
+num_high_outliers
+```
+
+Un 50% de los pacientes se encuentran entre 43 (Q3) y 30 (Q1). Como outliers
+tenemos:
+
+  * Lower outlier: hay 16 pacientes con menos de 10.5 años. 
+  * High outlier: hay 56 pacientes con más de 62.5 años.
+
+### Apartado c
+
+```{r}
+#Correlación habiendo convertido las variables en numéricas
+numeric_correlation <- cor(Aids2_numeric, method = 'pearson')
+numeric_correlation
+```
+
+Representación visual de la correlación
+```{r}
+library(ggcorrplot)
+
+ggcorrplot(numeric_correlation)
+```
+
+### Apartado d
+
+```{r}
+lrm_diag_death <- lm(diag ~ death, data = Aids2)
+summary(lrm_diag_death)
+```
+Las variables fecha de diagnóstico y fecha de muerte / final de observación 
+tienen una fuerte correlación positiva ya que R^2 es 0.6907 y es estadísticamente significativo ya que el p-value es menor que 2.2e-16.
+
+```{r}
+lrm_sex_death <- lm(death ~ status, data = Aids2)
+summary(lrm_sex_death)
+```
+Las variables fecha de diagnóstico y fecha de muerte / final de observación 
+tienen una correlación positiva normal moderada ya que R^2 es 0.4131 y es estadísticamente significativo ya que el p-value es menor que 2.2e-16.
+
+
+## 2.2
+
+### Apartado a
+
+```{r}
+#Frecuencia sexual de individuos en tres hospitales
+sex_hospital_1 <- c(11, 14, 7, 15, 11, 13, 11, 16, 10, 15, 18, 12, 9, 9, 10, 10, 15, 10, 14, 10, 10, 12, 14, 12, 15, 7, 13, 6, 10,  15, 20, 10, 13, 10, 6, 14, 8, 10, 8, 11)
+factor_hospital_1 <- as.factor('Hospital 1')
+
+sex_hospital_2 <- c(13, 10, 12, 7, 5, 10, 10, 16, 9, 7, 7, 2, 6, 9, 9, 8, 8, 10, 3, 6, 5, 2, 9, 3, 4, 5, 10, 8, 5, 9, 10, 8, 13, 10, 0, 2, 1, 1, 0, 4)
+factor_hospital_2 <- as.factor('Hospital 2')
+
+sex_hospital_3 <- c(6, 7, 3, 5, 9, 6, 1, 6, 0, 2, 5, 6, 11, 6, 7, 0, 5, 7, 5, 4, 7, 4, 2, 8, 9, 6, 1, 4, 7, 7, 8, 9, 7, 5, 1, 6, 9, 4, 7, 6)
+factor_hospital_3 <- as.factor('Hospital 3')
+
+#Veamos los histogramas para ver si siguen una distribución normal
+hist(sex_hospital_1, 
+     breaks = 10, 
+     main = 'Individuos del hospital 1', 
+     xlab = 'Frecuencia sexual por mes')
+
+hist(sex_hospital_2, 
+     breaks = 10, 
+     main = 'Individuos del hospital 2', 
+     xlab = 'Frecuencia sexual por mes')
+
+hist(sex_hospital_3, 
+     breaks = 10, 
+     main = 'Individuos del hospital 3', 
+     xlab = 'Frecuencia sexual por mes')
+
+data.frame(mean = c(mean(sex_hospital_1), mean(sex_hospital_2), mean(sex_hospital_3)),
+           sd = c(sd(sex_hospital_1), sd(sex_hospital_2), sd(sex_hospital_3)),
+           numero_observaciones = c(length(sex_hospital_1), 
+                                    length(sex_hospital_2),
+                                    length(sex_hospital_3)),
+           row.names = c(factor_hospital_1 , factor_hospital_2, factor_hospital_3))
+```
+
+Las medias y desviaciones estándar son diferentes. 
+
+```{r}
+boxplot(sex_hospital_1, sex_hospital_2, sex_hospital_3, 
+        col = heat.colors(3))
+```
+Los tres grupos parecen seguir una distribución más o menos simétrica y las cajas tienen un ancho similar.
+
+### Apartado b
+
+Las hipótesis son: 
+
+ * H0: Las medias de los tres conjuntos de datos son iguales
+ * H alternativa: Las medias de los tres conjuntos de datos son diferentes.
+
+```{r}
+sexual_freq_all_hospitals <- c(sex_hospital_1, sex_hospital_2, sex_hospital_3)
+hospitals_factor <- as.factor(c(rep(c('Hospital 1', 'Hospital 2', 'Hospital 3'), 
+                             each = 40)))
+
+anova_hospital <- aov(lm(sexual_freq_all_hospitals ~ hospitals_factor))
+
+summary(anova_hospital)
+```
+ 
+El valor-p es 1.07e-13 por lo tanto rechazamos H0 y aceptamos la hipótesis alternativa.
+
+Ahora vamos a ver si las muestras son normales. Como n < 50, checkeamos con el test Shapiro-Wilk. 
+
+En el test Shapiro-Wilk:
+ 
+ * H0: la distribución de los datos es normal
+ * H alternativa: la distribución de los datos no es normal. 
+ 
+Si el valor-p es menor de 0.05, rechazaremos H0. 
+
+```{r}
+library(stats)
+
+shapiro.test(sex_hospital_1)
+shapiro.test(sex_hospital_2)
+shapiro.test(sex_hospital_3)
+```
+Concluimos que ninguna de la distribución de datos de los tres hospitales siguen una distribución normal ya que su valor-p está por encima de 0.05.
+
+Veamos ahora si es homocedástica (característica de un modelo de regresión lineal que implica que la varianza de los errores es constante a lo largo del tiempo).
+
+Haremos el test de Bartlett para comprobarlo:
+
+  * H0: es homocedástica.
+  * H alternativa: no lo es.
+  
+```{r}
+bartlett.test(sexual_freq_all_hospitals ~ hospitals_factor)
+```
+
+El valor-p es 0.069, por lo tanto aceptamos H0 y concluimos que es homocedástica.
+
+### Apartado c
+
+ * Valor estadístico de contraste (F): 38.98
+ * Grados de libertad (Df): 2
+ * Grados de libertad residuales: 117
+ * P-value: 1.07e-13
+ 
+### Apartado d
+
+```{r}
+qf(0.05, 2, 117, lower.tail = FALSE) 
+```
+
+Como el valor F de la ANOVA es 38.98 y es mayor que el valor crítico 3.07, rechazamos la hipótesis nula y concretamos que las medias de las frecuencias sexuales de los tres hospitales son diferentes.
+
+# Sección 3
+
+He hecho una pequeña investigación del paquete Bioconductor
+
+```{r, include = FALSE}
+install.packages('BiocManager', repos = "http://cran.us.r-project.org")
+BiocManager::install("BSgenome.Scerevisiae.UCSC.sacCer3")
+```
+
+Bioconductor es un proyecto Open Source para el análisis y la comprensión de data genómico en R. 
+
+Include una gran variedad de herramientas para importar, limpiar y preprocesar datos genómicos y para guardar y manipular grandes datasets. También incluye herramientas de análisis estadístico para explorar y visualizar datos, incluidas herramientas de análisis de expresión diferencial, análisis de enriquecimiento de conjuntos de genes y agrupación.
+
+Vamos a trabajar con el conjunto de datos de la levadura, que es un hongo microscópico con la capacidad de producir la fermentación (comúnmente la alcohólica) en diversos compuestos orgánicos, como azúcares e hidratos de carbono.
+
+A continuación cargamos el paquete sacCer3, que contiene la información de la levadura de la cerveza: Saccharomyces cerevisiae, usado en la fabricación de pan, cerveza y vino. También veremos el contenido de la variable.
+
+```{r, include = FALSE}
+# Cargamos el genoma de la levadura
+library(BSgenome.Scerevisiae.UCSC.sacCer3)
+```
+
+```{r}
+# Asignamos los datos a la variable yeastGenome
+yeastGenome <- BSgenome.Scerevisiae.UCSC.sacCer3
+
+# Vemos los head y tails de los nombres de las secuencias y su longitud
+head(seqnames(yeastGenome))
+tail(seqlengths(yeastGenome))
+```
+
+A continuación, imprimiremos la secuencia del cromosoma chrXII y su longitud  
+
+```{r}
+yeastGenome$chrXII
+nchar(yeastGenome$chrXII)
+```
+
+Veamos la cantidad de Timinas, Adeninas, Citosinas y Guaninas que tiene el gen chrXII
+
+```{r}
+alphabetFrequency(yeastGenome$chrXII, baseOnly = TRUE)
+```
+
+Ahora vamos a obtener una sección de 50 bases entre las posiciones 151 y 200 del genoma chrXII
+
+```{r}
+adn_seq_chrXII <- getSeq(yeastGenome, names = 'chrXII', start = 150, end = 200)
+adn_seq_chrXII
+```
+
+Transcripción de esa cadena de ADN a ARN
+
+```{r}
+arn_seq_chrXII <- RNAString(adn_seq_chrXII)
+arn_seq_chrXII
+```
+
+Traducción de esa cadena de ARN a aminoácidos
+
+```{r}
+translate(arn_seq_chrXII)
+```
+
+Mostramos los palíndromos en el genoma del Saccharomyces cerevisiae. 
+
+```{r}
+findPalindromes(yeastGenome$chrXII)
+```
+
+Este paquete de R tiene infinidad de funciones dedicadas a la genómica computacional y es algo que seguiré investigando en el futuro.
+
+
