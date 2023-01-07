@@ -1,0 +1,120 @@
+---
+title: "Analysis of Diabetes Health Indicators / Dataset by Behavioral Risk Factor Surveillance System"
+author: "Juan José Tirado Pulido / Sheddad"
+note: "The survey was established in 1984. Data are collected monthly in all 50 states, Puerto Rico, the U.S. Virgin islands, and Guam."
+date: "January 2023"
+output: 
+  cleanrmd::html_document_clean: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: water-dark
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library('ggplot2')
+```
+# Introduction
+
+Diabetes is a chronic health condition that affects the way human body processes sugar (glucose). Glucose is an important source of energy for your body, but it needs the hormone insulin to help transport it from the bloodstream into the cells.
+
+There are two main types of diabetes: type 1 and type 2.
+
+Type 1 diabetes is an autoimmune disorder in which the body's immune system attacks and destroys the cells in the pancreas that produce insulin. This results in a complete lack of insulin, and people with type 1 diabetes must take insulin injections or use an insulin pump to manage their blood sugar levels.
+
+Type 2 diabetes is the more common form of diabetes, and it is usually caused by a combination of genetics and lifestyle factors, such as being overweight or inactive. In type 2 diabetes, the body's cells do not respond properly to insulin (a condition known as insulin resistance) or the pancreas does not produce enough insulin to meet the body's needs. People with type 2 diabetes may be able to manage their blood sugar levels with a healthy diet, exercise, and oral medications, but some may also need insulin injections.
+
+Both types of diabetes can lead to serious health complications if left untreated, including heart disease, nerve damage, blindness, and kidney damage.
+
+
+# General questions
+
+This questions were proposed in the website ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
+
+ * Can survey questions from the BRFSS provide accurate predictions of whether an individual has diabetes?
+ * What risk factors are most predictive of diabetes risk?
+ * Can we use a subset of the risk factors to accurately predict whether an individual has diabetes?
+ * Can we create a short form of questions from the BRFSS using feature selection to accurately predict if someone might have diabetes or is at high risk of diabetes?
+
+First of all we will explore the dataset and by the end of the study we will be able to answer them accurately.
+
+
+# Section 1
+
+## 1.1
+
+Let's explore the kind of files that will be imported and the relevant variables 
+of study
+
+```{r}
+diabetes_dataset <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
+                             header=TRUE)
+names(diabetes_dataset)
+```
+The variables are:
+
+ * Diabetes_012: 0 = no diabetes 1 = prediabetes 2 = diabetes
+ 
+ * HighBP: 0 = no high BP 1 = high BP
+ 
+ * HighChol: 0 = no high cholesterol 1 = high cholesterol
+ 
+ * CholCheck: 0 = no cholesterol check in 5 years 1 = yes cholesterol check in 5 years
+ 
+ * BMI: Body Mass Index
+ 
+ * Smoker: Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes] 0 = no 1 = yes            
+ 
+ * Stroke: You ever had a stroke. 0 = no 1 = yes
+ 
+ * HeartDiseaseorAttack: coronary heart disease (CHD) or myocardial infarction (MI) 0 = no 1 = yes
+ 
+ * PhysActivity: physical activity in past 30 days - not including job 0 = no 1 = yes
+ 
+ * Fruits: Consume Fruit 1 or more times per day 0 = no 1 = yes
+ 
+ * Veggies: Consume Vegetables 1 or more times per day 0 = no 1 = yes   
+ 
+ * HvyAlcoholConsump: Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week) 0 = no 1 = yes
+ 
+ * AnyHealthcare: Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc. 0 = no 1 = yes
+ 
+ * NoDocbcCost: Was there a time in the past 12 months when you needed to see a doctor but could not because of cost? 0 = no 1 = yes
+ 
+ * GenHlth: Would you say that in general your health is: scale 1-5 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
+ 
+ * MentHlth: Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?
+ 
+ * PhysHlth: Now thinking about your physical health, which includes physical illness and injury, for how many days during the past 30 days was your physical health not good?
+ 
+ * DiffWalk: Do you have serious difficulty walking or climbing stairs? 0 = no 1 = yes     
+ * Sex: 0 = female 1 = male  
+ 
+ * Age: 13-level age category ([_AGEG5YR](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP)) 
+ 
+ * Education: Education level ([EDUCA](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP))  
+
+ * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
+
+
+```{r}
+bmi_normal <- subset(diabetes_dataset, 
+                     diabetes_dataset$BMI >= 18.5 & diabetes_dataset$BMI <= 24.9)
+bmi_overweight <- subset(diabetes_dataset, diabetes_dataset$BMI > 25)
+```
+
+We created two dataframes separating the people that fall in a normal 
+BMI range (18.5 >= BMI <= 24.9) and the people that we can consider 
+overweight (BMI>25). 
+
+Now we will check for their mental health to see if there is any useful pattern.
+
+```{r}
+colMeans(bmi_normal[c('BMI', 'GenHlth', 'MentHlth', 'PhysHlth', 'Smoker')]) 
+colMeans(bmi_overweight[c('BMI', 'GenHlth', 'MentHlth', 'PhysHlth', 'Smoker')]) 
+```
+
