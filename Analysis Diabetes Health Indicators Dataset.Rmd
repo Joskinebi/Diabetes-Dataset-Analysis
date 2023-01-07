@@ -18,6 +18,18 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, include=FALSE}
 library('ggplot2')
 ```
+# Introduction
+
+Diabetes is a chronic health condition that affects the way human body processes sugar (glucose). Glucose is an important source of energy for your body, but it needs the hormone insulin to help transport it from the bloodstream into the cells.
+
+There are two main types of diabetes: type 1 and type 2.
+
+Type 1 diabetes is an autoimmune disorder in which the body's immune system attacks and destroys the cells in the pancreas that produce insulin. This results in a complete lack of insulin, and people with type 1 diabetes must take insulin injections or use an insulin pump to manage their blood sugar levels.
+
+Type 2 diabetes is the more common form of diabetes, and it is usually caused by a combination of genetics and lifestyle factors, such as being overweight or inactive. In type 2 diabetes, the body's cells do not respond properly to insulin (a condition known as insulin resistance) or the pancreas does not produce enough insulin to meet the body's needs. People with type 2 diabetes may be able to manage their blood sugar levels with a healthy diet, exercise, and oral medications, but some may also need insulin injections.
+
+Both types of diabetes can lead to serious health complications if left untreated, including heart disease, nerve damage, blindness, and kidney damage.
+
 
 # General questions
 
@@ -33,14 +45,15 @@ First of all we will explore the dataset and by the end of the study we will be 
 
 # Section 1
 
-## 1.1
-
 Let's explore the kind of files that will be imported and the relevant variables 
 of study
 
 ```{r}
 diabetes_dataset <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
-                             header=TRUE)
+                             header = TRUE, strip.white = TRUE)
+#Removing NA's from dataset
+diabetes_dataset[is.na(diabetes_dataset)] <- 0
+
 names(diabetes_dataset)
 ```
 The variables are:
@@ -82,27 +95,57 @@ The variables are:
  * DiffWalk: Do you have serious difficulty walking or climbing stairs? 0 = no 1 = yes     
  * Sex: 0 = female 1 = male  
  
- * Age: 13-level age category ([_AGEG5YR](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP)) 
+ * Age: 13-level age category ([_AGEG5YR](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/AGEG5YR?archive=NAHDAP)) 
  
  * Education: Education level ([EDUCA](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP))  
 
  * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
 
 
-```{r}
-bmi_normal <- subset(diabetes_dataset, 
-                     diabetes_dataset$BMI >= 18.5 & diabetes_dataset$BMI <= 24.9)
-bmi_overweight <- subset(diabetes_dataset, diabetes_dataset$BMI > 25)
-```
+## Does mental health lead to unhealthy eating patterns?
 
-We created two dataframes separating the people that fall in a normal 
-BMI range (18.5 >= BMI <= 24.9) and the people that we can consider 
-overweight (BMI>25). 
-
-Now we will check for their mental health to see if there is any useful pattern.
+What we are now doing is to check the general health using mental health as a way of subsetting the dataset. Why we choose to explore this? To understand if mental health leads to eating disorders, that can lead to unhealthy eating patterns ultimately leading to diabetes type II.
 
 ```{r}
-colMeans(bmi_normal[c('GenHlth', 'MentHlth', 'PhysHlth')]) 
-colMeans(bmi_overweight[c('GenHlth', 'MentHlth', 'PhysHlth')]) 
+women_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 0)
 ```
 
+We are checking the general health of women feeling negative emotions 10 or more   times a month.
+
+```{r}
+#Women with more or equal than 10 days feeling not good with theirmental health
+women_mental_health__more_than_10_days <- subset(women_diabetes_dataset, 
+                                                women_diabetes_dataset$MentHlth >= 10)
+
+colMeans(women_mental_health__more_than_10_days[c('BMI',
+                                                 'GenHlth', 
+                                                 'MentHlth', 
+                                                 'PhysHlth',
+                                                 'Age')], 
+         na.rm = TRUE) 
+```
+
+This means that the mean of women that feel psychologically bad 10 or more days have a BMI greater than 24.9, which we could consider overweight. Also the mean of physical health problems is 11.8 days in the month, and the mean of the age is between 50 and 54 years old. The mean of general health measurement is 'fair'.
+
+```{r}
+men_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 1)
+```
+
+Now let's do the same for men.
+
+```{r}
+#Men with more or equal than 10 days feeling not good with their mental health
+men_mental_health__more_than_10_days <- subset(men_diabetes_dataset, 
+                                                men_diabetes_dataset$MentHlth >= 10)
+
+colMeans(men_mental_health__more_than_10_days[c('BMI',
+                                                 'GenHlth', 
+                                                 'MentHlth', 
+                                                 'PhysHlth',
+                                                 'Age')], 
+         na.rm = TRUE) 
+```
+
+The mean of men that feel psychologically bad 10 or more days have a BMI greater than 24.9, which we could consider overweight. Also the mean of physical health problems is 12 days in the month, and the mean of the age is between 50 and 54 years old. The mean of general health measurement is 'fair'. 
+
+Both women and men are fairly equal in this sense. 
