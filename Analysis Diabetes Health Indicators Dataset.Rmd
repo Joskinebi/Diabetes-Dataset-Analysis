@@ -17,6 +17,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include=FALSE}
 library('ggplot2')
+library(sqldf)
+library(RSQLite)
 ```
 # Introduction
 
@@ -56,7 +58,7 @@ diabetes_dataset[is.na(diabetes_dataset)] <- 0
 
 names(diabetes_dataset)
 ```
-The variables are:
+Las variables son:
 
  * Diabetes_012: 0 = no diabetes 1 = prediabetes 2 = diabetes
  
@@ -101,7 +103,6 @@ The variables are:
 
  * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
 
-
 ## Does mental health lead to unhealthy eating patterns?
 
 What we are now doing is to check the general health using mental health as a way of subsetting the dataset. Why we choose to explore this? To understand if mental health leads to eating disorders, that can lead to unhealthy eating patterns ultimately leading to diabetes type II.
@@ -115,7 +116,10 @@ We are checking the general health of women feeling negative emotions 10 or more
 ```{r}
 #Women with more or equal than 10 days feeling not good with theirmental health
 women_mental_health__more_than_10_days <- subset(women_diabetes_dataset, 
-                                                women_diabetes_dataset$MentHlth >= 10)
+                                                women_diabetes_dataset$MentHlth >= 12)
+
+women_mental_health__more_than_10_days <- subset(women_diabetes_dataset, 
+                                                women_diabetes_dataset$MentHlth >= 1)
 
 colMeans(women_mental_health__more_than_10_days[c('BMI',
                                                  'GenHlth', 
@@ -146,6 +150,28 @@ colMeans(men_mental_health__more_than_10_days[c('BMI',
          na.rm = TRUE) 
 ```
 
-The mean of men that feel psychologically bad 10 or more days have a BMI greater than 24.9, which we could consider overweight. Also the mean of physical health problems is 12 days in the month, and the mean of the age is between 50 and 54 years old. The mean of general health measurement is 'fair'. 
+The mean of men that feel psychologically bad 10 or more days have a BMI greater than 24.9, which we could consider overweight. Also the mean of physical health problems is 12 days in the month, and the mean of the age is between 50 and 54 years old. The mean of general health measurement is 'fair'.
 
-Both women and men are fairly equal in this sense. 
+There's no significant difference between men and women
+
+Vamos a crear 
+```{r}
+sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(Income), AVG(Age), 
+        Count(*) * 100.0/ SUM(COUNT(*)) OVER () as percentage
+      FROM women_diabetes_dataset
+      GROUP BY Diabetes_012, HighBP, HighChol")
+```
+```{r}
+sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(Income), AVG(Age),                           Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
+      FROM women_mental_health__more_than_3_days
+      GROUP BY Diabetes_012, HighBP, HighChol")
+```
+Hemos encontrado conclusiones muy interesantes:
+
+ * Las mujeres con más problemas mentales, tienden 
+```{r}
+sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(HvyAlcoholConsump), AVG(Income),             AVG(Age), Count(*) * 100.0/SUM(COUNT(*)) OVER () as percentage
+      FROM men_mental_health__more_than_10_days
+      GROUP BY Diabetes_012, HighBP, HighChol")
+```
+
