@@ -42,7 +42,8 @@ Estas preguntas fueron propuestas en el sitio web ([KAGGLE](https://www.kaggle.c
  * ¿Podemos crear una forma abreviada de preguntas del BRFSS utilizando la selección de características para predecir con precisión si alguien puede tener diabetes o está en alto riesgo de diabetes?
 En primer lugar, exploraremos el conjunto de datos y al final del estudio podremos responderlas con precisión.
 
-# Sección 1
+# Sección 1
+
 Exploremos el tipo de archivos que se importarán y las variables relevantes de estudio.
 ```{r}
 diabetes_dataset <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
@@ -97,22 +98,22 @@ Las variables son:
 
  * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
 
-## Does mental health lead to unhealthy eating patterns?
+## ¿La salud mental lleva a niveles más altos de colesterol, IMC, enfermedades cardíacas? ¿Tiene alguna relación con el nivel de ingresos?
 
-What we are now doing is to check the general health using mental health as a way of subsetting the dataset. Why we choose to explore this? To understand if mental health leads to eating disorders, that can lead to unhealthy eating patterns ultimately leading to diabetes type II.
+Lo que estamos haciendo ahora es verificar la salud general utilizando la salud mental como una forma para subdividir el conjunto de datos. ¿Por qué elegimos explorar esto? Para entender si la salud mental lleva a trastornos alimentarios, que pueden conducir a patrones poco saludables y finalmente a la diabetes tipo II.
 
 ```{r}
 women_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 0)
 ```
 
-We are checking the general health of women feeling negative emotions 10 or more   times a month.
+Estamos revisando la salud general de las mujeres que sienten emociones negativas 10 o más días al mes.
 
 ```{r}
 #Women with stable mental health = 0 days of no problems.
 women_mental_health_stable <- subset(women_diabetes_dataset, 
                                      women_diabetes_dataset$MentHlth == 0)
 
-#Women with more or equal than 10 days feeling not good with theirmental health
+#Women with more or equal than 10 days feeling not good with their mental health
 women_mental_health__more_than_10_days <- subset(women_diabetes_dataset, 
                                                 women_diabetes_dataset$MentHlth >= 10)
 
@@ -124,13 +125,13 @@ colMeans(women_mental_health__more_than_10_days[c('BMI',
          na.rm = TRUE) 
 ```
 
-This means that the mean of women that feel psychologically bad 10 or more days have a BMI greater than 24.9, which we could consider overweight. Also the mean of physical health problems is 11.8 days in the month, and the mean of the age is between 50 and 54 years old. The mean of general health measurement is 'fair'.
+Esto significa que la media de las mujeres que se sienten psicológicamente mal 10 o más días tiene un IMC mayor a 24.9, lo cual podríamos considerar como sobrepeso. Además, la media de problemas de salud física es de 11.8 días al mes, y la media de edad está entre los 50 y 54 años. 
 
 ```{r}
 men_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 1)
 ```
 
-Now let's do the same for men.
+Hagamos lo mismo para los hombres
 
 ```{r}
 #Men with more or equal than 10 days feeling not good with their mental health
@@ -145,21 +146,41 @@ colMeans(men_mental_health__more_than_10_days[c('BMI',
          na.rm = TRUE) 
 ```
 
-The mean of men that feel psychologically bad 10 or more days have a BMI greater than 24.9, which we could consider overweight. Also the mean of physical health problems is 12 days in the month, and the mean of the age is between 50 and 54 years old. The mean of general health measurement is 'fair'.
+La media de los hombres que se sienten psicológicamente mal 10 o más días tiene un IMC mayor a 24.9, lo cual podríamos considerar como sobrepeso. Además, la media de problemas de salud física es de 12 días al mes, y la media de edad está entre los 50 y 54 años. La media de la medición de salud general es 'regular'.
 
-There's no significant difference between men and women
+No hay diferencia significativa entre hombres y mujeres.
 
-Vamos a crear 
+Ahora vamos a realizar la siguiente investigación:
+
 ```{r}
-sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(PhysActivity), AVG(HeartDiseaseorAttack), AVG(Income), AVG(Veggies), AVG(Age), 
-        Count(*) * 100.0/ SUM(COUNT(*)) OVER () as percentage
-      FROM women_mental_health_stable
-      GROUP BY Diabetes_012, HighBP, HighChol")
+sqldf("
+SELECT 
+  Diabetes_012 as Diab_012, 
+  HighBP, 
+  HighChol, 
+  ROUND(AVG(BMI), 2) as BMI, 
+  ROUND(AVG(PhysActivity), 2) as PhysAct, 
+  ROUND(AVG(HeartDiseaseorAttack), 2) as Cardiopathy, 
+  ROUND(AVG(Income), 2) as Income, 
+  ROUND(AVG(Age), 2) as Age,   
+  Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
+FROM women_mental_health_stable
+GROUP BY Diabetes_012, HighBP, HighChol")
 ```
 ```{r}
-sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(PhysActivity), AVG(HeartDiseaseorAttack), AVG(Income), AVG(Age),                            Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
-      FROM women_mental_health__more_than_3_days
-      GROUP BY Diabetes_012, HighBP, HighChol")
+sqldf("
+SELECT 
+  Diabetes_012 as Diab_012, 
+  HighBP, 
+  HighChol, 
+  ROUND(AVG(BMI), 2) as BMI, 
+  ROUND(AVG(PhysActivity), 2) as PhysAct, 
+  ROUND(AVG(HeartDiseaseorAttack), 2) as Cardiopathy, 
+  ROUND(AVG(Income), 2) as Income, 
+  ROUND(AVG(Age), 2) as Age,   
+  Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
+FROM women_mental_health__more_than_10_days
+GROUP BY Diabetes_012, HighBP, HighChol")
 ```
 Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
 
@@ -168,12 +189,8 @@ Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más i
  * Sufrir mayor número de cardiopatías.
  * Sufren alta presión arterial y colesterol más jóvenes. 
  * Son diagnosticados con diabetes más jóvenes.
+ * Su BMI es de media más alto.
+ * Sufren mayor percentual de pre y diabetes, alta presión arterial y alto coresterol.
 
-También podemos comprobar que, en general, la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
-
-```{r}
-sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(PhysActivity), AVG(Income),             AVG(Age), Count(*) * 100.0/SUM(COUNT(*)) OVER () as percentage
-      FROM men_mental_health__more_than_10_days
-      GROUP BY Diabetes_012, HighBP, HighChol")
-```
+También podemos comprobar que, en ambos resultados, la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
 
