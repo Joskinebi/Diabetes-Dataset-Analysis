@@ -20,36 +20,30 @@ library('ggplot2')
 library(sqldf)
 library(RSQLite)
 ```
-# Introduction
+# Introducción
 
-Diabetes is a chronic health condition that affects the way human body processes sugar (glucose). Glucose is an important source of energy for your body, but it needs the hormone insulin to help transport it from the bloodstream into the cells.
+La diabetes es una afección de salud crónica que afecta la manera en que el cuerpo humano procesa el azúcar (glucosa). La glucosa es una importante fuente de energía para tu cuerpo, pero necesita la hormona insulina para ayudar a transportarla desde la sangre hasta las células.
 
-There are two main types of diabetes: type 1 and type 2.
+Existen dos tipos principales de diabetes: tipo 1 y tipo 2.
 
-Type 1 diabetes is an autoimmune disorder in which the body's immune system attacks and destroys the cells in the pancreas that produce insulin. This results in a complete lack of insulin, and people with type 1 diabetes must take insulin injections or use an insulin pump to manage their blood sugar levels.
+La diabetes tipo 1 es un trastorno autoinmune en el cual el sistema inmunitario del cuerpo ataca y destruye las células del páncreas que producen insulina. Esto resulta en una falta completa de insulina, y las personas con diabetes tipo 1 deben recibir inyecciones de insulina o usar una bomba de insulina para controlar sus niveles de azúcar en sangre.
 
-Type 2 diabetes is the more common form of diabetes, and it is usually caused by a combination of genetics and lifestyle factors, such as being overweight or inactive. In type 2 diabetes, the body's cells do not respond properly to insulin (a condition known as insulin resistance) or the pancreas does not produce enough insulin to meet the body's needs. People with type 2 diabetes may be able to manage their blood sugar levels with a healthy diet, exercise, and oral medications, but some may also need insulin injections.
+La diabetes tipo 2 es la forma más común de diabetes y suele ser causada por una combinación de factores genéticos y de estilo de vida, como tener sobrepeso o ser sedentario. En la diabetes tipo 2, las células del cuerpo no responden adecuadamente a la insulina (una condición conocida como resistencia a la insulina) o el páncreas no produce suficiente insulina para satisfacer las necesidades del cuerpo. Las personas con diabetes tipo 2 pueden poder controlar sus niveles de azúcar en sangre con una dieta saludable, ejercicio y medicamentos orales, pero algunas también pueden necesitar inyecciones de insulina.
 
-Both types of diabetes can lead to serious health complications if left untreated, including heart disease, nerve damage, blindness, and kidney damage.
+Ambos tipos de diabetes pueden conducir a complicaciones de salud graves si no se tratan, incluyendo enfermedades cardíacas, daño nervioso, ceguera y daño renal.
 
+# Preguntas generales
 
-# General questions
+Estas preguntas fueron propuestas en el sitio web ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
 
-This questions were proposed in the website ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
+ * ¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas de si un individuo tiene diabetes?
+ * ¿Cuáles son los factores de riesgo más predictivos del riesgo de diabetes?
+ * ¿Podemos usar un subconjunto de los factores de riesgo para predecir con precisión si un individuo tiene diabetes?
+ * ¿Podemos crear una forma abreviada de preguntas del BRFSS utilizando la selección de características para predecir con precisión si alguien puede tener diabetes o está en alto riesgo de diabetes?
+En primer lugar, exploraremos el conjunto de datos y al final del estudio podremos responderlas con precisión.
 
- * Can survey questions from the BRFSS provide accurate predictions of whether an individual has diabetes?
- * What risk factors are most predictive of diabetes risk?
- * Can we use a subset of the risk factors to accurately predict whether an individual has diabetes?
- * Can we create a short form of questions from the BRFSS using feature selection to accurately predict if someone might have diabetes or is at high risk of diabetes?
-
-First of all we will explore the dataset and by the end of the study we will be able to answer them accurately.
-
-
-# Section 1
-
-Let's explore the kind of files that will be imported and the relevant variables 
-of study
-
+# Sección 1
+Exploremos el tipo de archivos que se importarán y las variables relevantes de estudio.
 ```{r}
 diabetes_dataset <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
                              header = TRUE, strip.white = TRUE)
@@ -114,12 +108,13 @@ women_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 0)
 We are checking the general health of women feeling negative emotions 10 or more   times a month.
 
 ```{r}
+#Women with stable mental health = 0 days of no problems.
+women_mental_health_stable <- subset(women_diabetes_dataset, 
+                                     women_diabetes_dataset$MentHlth == 0)
+
 #Women with more or equal than 10 days feeling not good with theirmental health
 women_mental_health__more_than_10_days <- subset(women_diabetes_dataset, 
-                                                women_diabetes_dataset$MentHlth >= 12)
-
-women_mental_health__more_than_10_days <- subset(women_diabetes_dataset, 
-                                                women_diabetes_dataset$MentHlth >= 1)
+                                                women_diabetes_dataset$MentHlth >= 10)
 
 colMeans(women_mental_health__more_than_10_days[c('BMI',
                                                  'GenHlth', 
@@ -156,21 +151,28 @@ There's no significant difference between men and women
 
 Vamos a crear 
 ```{r}
-sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(Income), AVG(Age), 
+sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(PhysActivity), AVG(HeartDiseaseorAttack), AVG(Income), AVG(Veggies), AVG(Age), 
         Count(*) * 100.0/ SUM(COUNT(*)) OVER () as percentage
-      FROM women_diabetes_dataset
+      FROM women_mental_health_stable
       GROUP BY Diabetes_012, HighBP, HighChol")
 ```
 ```{r}
-sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(Income), AVG(Age),                           Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
+sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(PhysActivity), AVG(HeartDiseaseorAttack), AVG(Income), AVG(Age),                            Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
       FROM women_mental_health__more_than_3_days
       GROUP BY Diabetes_012, HighBP, HighChol")
 ```
-Hemos encontrado conclusiones muy interesantes:
+Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
 
- * Las mujeres con más problemas mentales, tienden 
+ * Tener menor poder adquisitivo, lo que puede darnos una pista de que su alimentación podría ser de menor calidad.
+ * Hacer menos ejercicio.
+ * Sufrir mayor número de cardiopatías.
+ * Sufren alta presión arterial y colesterol más jóvenes. 
+ * Son diagnosticados con diabetes más jóvenes.
+
+También podemos comprobar que, en general, la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
+
 ```{r}
-sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(HvyAlcoholConsump), AVG(Income),             AVG(Age), Count(*) * 100.0/SUM(COUNT(*)) OVER () as percentage
+sqldf("SELECT Diabetes_012, HighBP, HighChol, AVG(PhysActivity), AVG(Income),             AVG(Age), Count(*) * 100.0/SUM(COUNT(*)) OVER () as percentage
       FROM men_mental_health__more_than_10_days
       GROUP BY Diabetes_012, HighBP, HighChol")
 ```
