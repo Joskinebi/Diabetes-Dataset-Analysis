@@ -202,3 +202,17 @@ sqldf(diabetes_health_query("men_with_stable_mental_health"))
 sqldf(diabetes_health_query("men_with_mental_health_problems_more_than_10_days_a_month"))
 ```
 
+Con relación a las mujeres, encontramos que los hombres:
+
+ * Son más propensos a cardiopatías. 
+ * Tienen una actividad física mayor. 
+ * Tienen mas o menos el mismo BMI.
+
+Los hombres con inestabilidad emocional con respecto a los más estables tienden a:
+ 
+ * Hacer menos actividad física.
+ * Tienen un menor poder adquisitivo.
+ * Mayor cantidad de cardiopatías.
+ * Tener mayor porcentaje con colesterol alto, presión arterial y diabetes (casi el doble).
+ 
+ 
