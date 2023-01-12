@@ -110,18 +110,18 @@ Estamos revisando la salud general de las mujeres que sienten emociones negativa
 
 ```{r}
 #Women with stable mental health = 0 days of no problems.
-women_mental_health_stable <- subset(women_diabetes_dataset, 
+women_with_stable_mental_health <- subset(women_diabetes_dataset, 
                                      women_diabetes_dataset$MentHlth == 0)
 
 #Women with more or equal than 10 days feeling not good with their mental health
-women_mental_health__more_than_10_days <- subset(women_diabetes_dataset, 
+women_with_mental_health_problems_more_than_10_days_a_month <- subset(women_diabetes_dataset, 
                                                 women_diabetes_dataset$MentHlth >= 10)
 
-colMeans(women_mental_health__more_than_10_days[c('BMI',
-                                                 'GenHlth', 
-                                                 'MentHlth', 
-                                                 'PhysHlth',
-                                                 'Age')], 
+colMeans(women_with_mental_health_problems_more_than_10_days_a_month[c('BMI',
+                                                              'GenHlth', 
+                                                              'MentHlth', 
+                                                              'PhysHlth',
+                                                              'Age')], 
          na.rm = TRUE) 
 ```
 
@@ -134,11 +134,14 @@ men_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 1)
 Hagamos lo mismo para los hombres
 
 ```{r}
+
+men_with_stable_mental_health <- subset(men_diabetes_dataset, 
+                                          men_diabetes_dataset$MentHlth == 0)
 #Men with more or equal than 10 days feeling not good with their mental health
-men_mental_health__more_than_10_days <- subset(men_diabetes_dataset, 
+men_with_mental_health_problems_more_than_10_days_a_month <- subset(men_diabetes_dataset, 
                                                 men_diabetes_dataset$MentHlth >= 10)
 
-colMeans(men_mental_health__more_than_10_days[c('BMI',
+colMeans(men_with_mental_health_problems_more_than_10_days_a_month[c('BMI',
                                                  'GenHlth', 
                                                  'MentHlth', 
                                                  'PhysHlth',
@@ -153,34 +156,29 @@ No hay diferencia significativa entre hombres y mujeres.
 Ahora vamos a realizar la siguiente investigación:
 
 ```{r}
-sqldf("
-SELECT 
-  Diabetes_012 as Diab_012, 
-  HighBP, 
-  HighChol, 
-  ROUND(AVG(BMI), 2) as BMI, 
-  ROUND(AVG(PhysActivity), 2) as PhysAct, 
-  ROUND(AVG(HeartDiseaseorAttack), 2) as Cardiopathy, 
-  ROUND(AVG(Income), 2) as Income, 
-  ROUND(AVG(Age), 2) as Age,   
-  Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
-FROM women_mental_health_stable
-GROUP BY Diabetes_012, HighBP, HighChol")
+diabetes_health_query <- function(gender_dataset) {
+  return(paste("
+    SELECT 
+      Diabetes_012 as Diab_012, 
+      HighBP, 
+      HighChol, 
+      ROUND(AVG(BMI), 2) as BMI, 
+      ROUND(AVG(PhysActivity), 2) as PhysAct, 
+      ROUND(AVG(HeartDiseaseorAttack), 2) as Cardiopathy, 
+      ROUND(AVG(Income), 2) as Income, 
+      ROUND(AVG(Age), 2) as Age,   
+      Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
+    FROM ", gender_dataset, "
+    GROUP BY Diabetes_012, HighBP, HighChol"))
+}
 ```
+
 ```{r}
-sqldf("
-SELECT 
-  Diabetes_012 as Diab_012, 
-  HighBP, 
-  HighChol, 
-  ROUND(AVG(BMI), 2) as BMI, 
-  ROUND(AVG(PhysActivity), 2) as PhysAct, 
-  ROUND(AVG(HeartDiseaseorAttack), 2) as Cardiopathy, 
-  ROUND(AVG(Income), 2) as Income, 
-  ROUND(AVG(Age), 2) as Age,   
-  Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
-FROM women_mental_health__more_than_10_days
-GROUP BY Diabetes_012, HighBP, HighChol")
+sqldf(diabetes_health_query("women_with_stable_mental_health"))
+```
+
+```{r}
+sqldf(diabetes_health_query("women_with_mental_health_problems_more_than_10_days_a_month"))
 ```
 Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
 
@@ -193,4 +191,14 @@ Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más i
  * Sufren mayor percentual de pre y diabetes, alta presión arterial y alto coresterol.
 
 También podemos comprobar que, en ambos resultados, la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
+
+Realizaremos lo mismo para los hombres
+
+```{r}
+sqldf(diabetes_health_query("men_with_stable_mental_health"))
+```
+
+```{r}
+sqldf(diabetes_health_query("men_with_mental_health_problems_more_than_10_days_a_month"))
+```
 
