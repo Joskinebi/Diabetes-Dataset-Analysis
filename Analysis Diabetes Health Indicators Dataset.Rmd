@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library('ggplot2')
 library(sqldf)
 library(RSQLite)
+library(scales)
 ```
 # Introducción
 
@@ -215,4 +216,18 @@ Los hombres con inestabilidad emocional con respecto a los más estables tienden
  * Mayor cantidad de cardiopatías.
  * Tener mayor porcentaje con colesterol alto, presión arterial y diabetes (casi el doble).
  
+ ## Modelos que representan la relación que tienen el IMC, el tabaco, el alcohol con la diabetes
  
+¿Hay valores faltantes hay para cada variable? 
+
+```{r}
+any(is.na(diabetes_dataset))
+```
+
+Veamos cuanta proporcion de individuos tienen diabetes y de qué tipo es:
+
+```{r}
+ggplot(diabetes_dataset, aes(Diabetes_012)) +
+  geom_bar(aes(y=..count../sum(..count..))) +
+  scale_y_continuous(labels = percent_format())
+```
