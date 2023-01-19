@@ -20,6 +20,8 @@ library('ggplot2')
 library(sqldf)
 library(RSQLite)
 library(scales)
+library(dplyr)
+library(tidyr)
 ```
 # Introducción
 
@@ -47,100 +49,124 @@ En primer lugar, exploraremos el conjunto de datos y al final del estudio podrem
 
 Exploremos el tipo de archivos que se importarán y las variables relevantes de estudio.
 ```{r}
-diabetes_dataset <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
+diabetes_df <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
                              header = TRUE, strip.white = TRUE)
-#Removing NA's from dataset
-diabetes_dataset[is.na(diabetes_dataset)] <- 0
+#Quitando NA's de dataframe
+diabetes_df[is.na(diabetes_df)] <- 0
 
-names(diabetes_dataset)
+#Mostramos los nombres de las variables
+names(diabetes_df)
+
+#Mostramos los primeros datos
+head(diabetes_df)
+
+#Mostramos los últimos datos
+tail(diabetes_df)
 ```
-Las variables son:
+Modificamos el data frame con las variables que nos interesan
+```{r}
+diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker,
+                    Stroke, HeartDiseaseorAttack, PhysActivity, 
+                    HvyAlcoholConsump, GenHlth, MentHlth, PhysHlth, Sex, Age, 
+                    Education, Income
+                    FROM diabetes_df')
 
- * Diabetes_012: 0 = no diabetes 1 = prediabetes 2 = diabetes
- 
- * HighBP: 0 = no high BP 1 = high BP
- 
- * HighChol: 0 = no high cholesterol 1 = high cholesterol
- 
- * CholCheck: 0 = no cholesterol check in 5 years 1 = yes cholesterol check in 5 years
- 
- * BMI: Body Mass Index
- 
- * Smoker: Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes] 0 = no 1 = yes            
- 
- * Stroke: You ever had a stroke. 0 = no 1 = yes
- 
- * HeartDiseaseorAttack: coronary heart disease (CHD) or myocardial infarction (MI) 0 = no 1 = yes
- 
- * PhysActivity: physical activity in past 30 days - not including job 0 = no 1 = yes
- 
- * Fruits: Consume Fruit 1 or more times per day 0 = no 1 = yes
- 
- * Veggies: Consume Vegetables 1 or more times per day 0 = no 1 = yes   
- 
- * HvyAlcoholConsump: Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week) 0 = no 1 = yes
- 
- * AnyHealthcare: Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc. 0 = no 1 = yes
- 
- * NoDocbcCost: Was there a time in the past 12 months when you needed to see a doctor but could not because of cost? 0 = no 1 = yes
- 
- * GenHlth: Would you say that in general your health is: scale 1-5 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
- 
- * MentHlth: Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?
- 
- * PhysHlth: Now thinking about your physical health, which includes physical illness and injury, for how many days during the past 30 days was your physical health not good?
- 
- * DiffWalk: Do you have serious difficulty walking or climbing stairs? 0 = no 1 = yes     
- * Sex: 0 = female 1 = male  
- 
- * Age: 13-level age category ([_AGEG5YR](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/AGEG5YR?archive=NAHDAP)) 
- 
- * Education: Education level ([EDUCA](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP))  
+```
 
- * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
+
+Recodificamos y parametrizamos algunas variables:
+```{r}
+# Diabetes_012
+diabetes_df$Diabetes_012_cat <- factor(diabetes_df$Diabetes_012,
+                                      levels = c(0, 1, 2),
+                                      labels = c("No Diabetes", "Prediabetes", "Diabetes"))
+
+# HighBP
+diabetes_df$HighBP_cat <- factor(diabetes_df$HighBP, 
+                                 levels = c(0, 1),
+                                 labels = c("PA No Alta", "PA Alta"))
+
+# HighChol
+diabetes_df$HighChol_cat <- factor(diabetes_df$HighChol,
+                                   levels = c(0, 1),
+                                   labels = c("Colesterol No Alto", "Colesterol Alto"))
+
+# Smoker
+diabetes_df$Smoker_cat <- factor(diabetes_df$Smoker,
+                                 levels = c(0, 1),
+                                 labels = c("No ha fumado", "Ha fumado"))
+
+# Stroke
+diabetes_df$Stroke_cat <- factor(diabetes_df$Stroke,
+                                 levels = c(0, 1),
+                                 labels = c("No Derrame Cerebral", "Derrame Cerebral"))
+
+# HeartDiseaseorAttack
+diabetes_df$HeartDiseaseorAttack_cat <- factor(diabetes_df$HeartDiseaseorAttack,
+                                               levels = c(0, 1),
+                                               labels = c("No Infarto", "Infarto"))
+
+# HvyAlcoholConsump
+diabetes_df$HvyAlcoholConsump_cat <- factor(diabetes_df$HvyAlcoholConsump,
+                                            levels = c(0, 1),
+                                            labels = c("No Consumo", "Consumo"))
+
+# Sexo
+diabetes_df$Sex_cat <- factor(diabetes_df$Sex,
+                              levels = c(0, 1),
+                              labels = c("Mujer", "Hombre"))
+```
+
+Revisamos el tipo de variables
+```{r}
+str(diabetes_df)
+```
+Resumen estadístico
+
+```{r}
+summary(diabetes_df)
+```
 
 ## ¿La salud mental lleva a niveles más altos de colesterol, IMC, enfermedades cardíacas? ¿Tiene alguna relación con el nivel de ingresos?
 
 Lo que estamos haciendo ahora es verificar la salud general utilizando la salud mental como una forma para subdividir el conjunto de datos. ¿Por qué elegimos explorar esto? Para entender si la salud mental lleva a trastornos alimentarios, que pueden conducir a patrones poco saludables y finalmente a la diabetes tipo II.
 
-```{r}
-women_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 0)
-```
-
 Estamos revisando la salud general de las mujeres que sienten emociones negativas 10 o más días al mes.
 
 ```{r}
 #Women with stable mental health = 0 days of no problems.
-women_with_stable_mental_health <- subset(women_diabetes_dataset, 
-                                     women_diabetes_dataset$MentHlth == 0)
+women_with_stable_mental_health <- subset(diabetes_df, 
+                                       diabetes_df$MentHlth == 0 &
+                                       diabetes_df$Sex == 0)
 
 #Women with more or equal than 10 days feeling not good with their mental health
-women_with_mental_health_problems_more_than_10_days_a_month <- subset(women_diabetes_dataset, 
-                                                women_diabetes_dataset$MentHlth >= 10)
+women_with_mental_health_problems_more_than_10_days_a_month <-             
+                                       subset(diabetes_df, 
+                                       diabetes_df$MentHlth >= 10 &
+                                       diabetes_df$Sex == 0)
 
 colMeans(women_with_mental_health_problems_more_than_10_days_a_month[c('BMI',
                                                               'GenHlth', 
                                                               'MentHlth', 
                                                               'PhysHlth',
                                                               'Age')], 
-         na.rm = TRUE) 
+         na.rm = TRUE)
 ```
 
 Esto significa que la media de las mujeres que se sienten psicológicamente mal 10 o más días tiene un IMC mayor a 24.9, lo cual podríamos considerar como sobrepeso. Además, la media de problemas de salud física es de 11.8 días al mes, y la media de edad está entre los 50 y 54 años. 
-
-```{r}
-men_diabetes_dataset <- subset(diabetes_dataset, diabetes_dataset$Sex == 1)
-```
 
 Hagamos lo mismo para los hombres
 
 ```{r}
 
-men_with_stable_mental_health <- subset(men_diabetes_dataset, 
-                                          men_diabetes_dataset$MentHlth == 0)
+men_with_stable_mental_health <- subset(diabetes_df, 
+                                        diabetes_df$MentHlth == 0 &
+                                        diabetes_df$Sex == 1)
+
 #Men with more or equal than 10 days feeling not good with their mental health
-men_with_mental_health_problems_more_than_10_days_a_month <- subset(men_diabetes_dataset, 
-                                                men_diabetes_dataset$MentHlth >= 10)
+men_with_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_df,
+                                                                  diabetes_df$MentHlth == 0 &
+                                                                  diabetes_df$Sex == 1)
 
 colMeans(men_with_mental_health_problems_more_than_10_days_a_month[c('BMI',
                                                  'GenHlth', 
@@ -221,13 +247,13 @@ Los hombres con inestabilidad emocional con respecto a los más estables tienden
 ¿Hay valores faltantes hay para cada variable? 
 
 ```{r}
-any(is.na(diabetes_dataset))
+any(is.na(diabetes_df))
 ```
 
-Veamos cuanta proporcion de individuos tienen diabetes y de qué tipo es:
+Veamos cuanta proporcion de individuos no tienen diabetes, tienen prediabetes y diabetes:
 
 ```{r}
-ggplot(diabetes_dataset, aes(Diabetes_012)) +
+ggplot(diabetes_df, aes(Diabetes_012_cat)) +
   geom_bar(aes(y=..count../sum(..count..))) +
   scale_y_continuous(labels = percent_format())
 ```
