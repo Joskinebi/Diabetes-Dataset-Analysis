@@ -20,6 +20,7 @@ library('ggplot2')
 library(sqldf)
 library(RSQLite)
 library(scales)
+library(car)
 ```
 # Introducción
 
@@ -116,46 +117,36 @@ diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker,
 ```
 
 Recodificamos y parametrizamos algunas variables:
-```{r}
+
+```{r recodificación}
 # Diabetes_012
-diabetes_df$Diabetes_012_cat <- factor(diabetes_df$Diabetes_012,
-                                      levels = c(0, 1, 2),
-                                      labels = c("No Diabetes", "Prediabetes", "Diabetes"))
-
+diabetes_df$Diabetes_012_cat <- recode(diabetes_df$Diabetes_012,
+                                "0 = 'No Diabetes' ; 1 = 'Prediabetes'; 
+                                2 = 'Diabetes'", as.factor = TRUE)
 # HighBP
-diabetes_df$HighBP_cat <- factor(diabetes_df$HighBP, 
-                                 levels = c(0, 1),
-                                 labels = c("PA No Alta", "PA Alta"))
-
+diabetes_df$HighBP_cat <- recode(diabetes_df$HighBP, "0 = 'PA No Alta' ; 
+                                 1 = 'PA Alta'", as.factor = TRUE)
 # HighChol
-diabetes_df$HighChol_cat <- factor(diabetes_df$HighChol,
-                                   levels = c(0, 1),
-                                   labels = c("Colesterol No Alto", "Colesterol Alto"))
-
+diabetes_df$HighChol_cat <- recode(diabetes_df$HighChol,
+                                "0 = 'Colesterol No Alto' ; 
+                                1 = 'Colesterol Alto'", as.factor = TRUE)
 # Smoker
-diabetes_df$Smoker_cat <- factor(diabetes_df$Smoker,
-                                 levels = c(0, 1),
-                                 labels = c("No ha fumado", "Ha fumado"))
-
+diabetes_df$Smoker_cat <- recode(diabetes_df$Smoker, "0 = 'No ha fumado' ; 
+                                 1 = 'Ha fumado'", as.factor = TRUE)
 # Stroke
-diabetes_df$Stroke_cat <- factor(diabetes_df$Stroke,
-                                 levels = c(0, 1),
-                                 labels = c("No Derrame Cerebral", "Derrame Cerebral"))
-
+diabetes_df$Stroke_cat <- recode(diabetes_df$Stroke, "0 = 'No Derrame Cerebral'; 
+                                 1 = 'Derrame Cerebral'", as.factor = TRUE)
 # HeartDiseaseorAttack
-diabetes_df$HeartDiseaseorAttack_cat <- factor(diabetes_df$HeartDiseaseorAttack,
-                                               levels = c(0, 1),
-                                               labels = c("No Infarto", "Infarto"))
-
+diabetes_df$HeartDiseaseorAttack_cat <- recode(diabetes_df$HeartDiseaseorAttack,
+                                "0 = 'No Infarto'; 1 = 'Infarto'",
+                                as.factor = TRUE)
 # HvyAlcoholConsump
-diabetes_df$HvyAlcoholConsump_cat <- factor(diabetes_df$HvyAlcoholConsump,
-                                            levels = c(0, 1),
-                                            labels = c("No Consumo", "Consumo"))
-
+diabetes_df$HvyAlcoholConsump_cat <- recode(diabetes_df$HvyAlcoholConsump,
+                                "0 = 'No Consumo'; 1 = 'Infarto'",
+                                as.factor = TRUE)
 # Sexo
-diabetes_df$Sex_cat <- factor(diabetes_df$Sex,
-                              levels = c(0, 1),
-                              labels = c("Mujer", "Hombre"))
+diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
+                                "0 = 'Mujer' ; 1 = 'Hombre'", as.factor = TRUE)
 ```
 
 Revisamos el tipo de variables
