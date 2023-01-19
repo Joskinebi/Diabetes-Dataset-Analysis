@@ -1,6 +1,6 @@
 ---
 title: "Analysis of Diabetes Health Indicators / Dataset by Behavioral Risk Factor Surveillance System"
-author: "Juan José Tirado Pulido / Sheddad"
+author: "Sheddad Kaid-Salah Ferrón / Juan José Tirado Pulido"
 note: "The survey was established in 1984. Data are collected monthly in all 50 states, Puerto Rico, the U.S. Virgin islands, and Guam."
 date: "January 2023"
 output: 
@@ -20,8 +20,6 @@ library('ggplot2')
 library(sqldf)
 library(RSQLite)
 library(scales)
-library(dplyr)
-library(tidyr)
 ```
 # Introducción
 
@@ -35,6 +33,51 @@ La diabetes tipo 2 es la forma más común de diabetes y suele ser causada por u
 
 Ambos tipos de diabetes pueden conducir a complicaciones de salud graves si no se tratan, incluyendo enfermedades cardíacas, daño nervioso, ceguera y daño renal.
 
+# Variables del dataset
+
+ * Diabetes_012: 0 = no diabetes 1 = prediabetes 2 = diabetes
+ 
+ * HighBP: 0 = no high BP 1 = high BP
+ 
+ * HighChol: 0 = no high cholesterol 1 = high cholesterol
+ 
+ * CholCheck: 0 = no cholesterol check in 5 years 1 = yes cholesterol check in 5 years
+ 
+ * BMI: Body Mass Index
+ 
+ * Smoker: Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes] 0 = no 1 = yes            
+ 
+ * Stroke: You ever had a stroke. 0 = no 1 = yes
+ 
+ * HeartDiseaseorAttack: coronary heart disease (CHD) or myocardial infarction (MI) 0 = no 1 = yes
+ 
+ * PhysActivity: physical activity in past 30 days - not including job 0 = no 1 = yes
+ 
+ * Fruits: Consume Fruit 1 or more times per day 0 = no 1 = yes
+ 
+ * Veggies: Consume Vegetables 1 or more times per day 0 = no 1 = yes   
+ 
+ * HvyAlcoholConsump: Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week) 0 = no 1 = yes
+ 
+ * AnyHealthcare: Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc. 0 = no 1 = yes
+ 
+ * NoDocbcCost: Was there a time in the past 12 months when you needed to see a doctor but could not because of cost? 0 = no 1 = yes
+ 
+ * GenHlth: Would you say that in general your health is: scale 1-5 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
+ 
+ * MentHlth: Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?
+ 
+ * PhysHlth: Now thinking about your physical health, which includes physical illness and injury, for how many days during the past 30 days was your physical health not good?
+ 
+ * DiffWalk: Do you have serious difficulty walking or climbing stairs? 0 = no 1 = yes     
+ * Sex: 0 = female 1 = male  
+ 
+ * Age: 13-level age category ([_AGEG5YR](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/AGEG5YR?archive=NAHDAP)) 
+ 
+ * Education: Education level ([EDUCA](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP))  
+
+ * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
+ 
 # Preguntas generales
 
 Estas preguntas fueron propuestas en el sitio web ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
@@ -70,9 +113,7 @@ diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker,
                     HvyAlcoholConsump, GenHlth, MentHlth, PhysHlth, Sex, Age, 
                     Education, Income
                     FROM diabetes_df')
-
 ```
-
 
 Recodificamos y parametrizamos algunas variables:
 ```{r}
