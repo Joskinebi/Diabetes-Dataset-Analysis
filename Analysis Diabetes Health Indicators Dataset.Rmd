@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r librerías, include=FALSE}
-library('ggplot2')
+library(ggplot2)
 library(sqldf)
 library(RSQLite)
 library(scales)
@@ -95,7 +95,7 @@ de datos.
 
 ```{r}
 # Importamos el fichero 
-diabetes_csv = read.csv("diabetes_012_health_indicators_BRFSS2015.csv", 
+diabetes_csv = read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv", 
                      header = TRUE, sep = ",")
 # Mostramos los primeros datos
 head(diabetes_csv)
@@ -196,7 +196,7 @@ diabetes_df$HeartDiseaseorAttack_cat <- recode(diabetes_df$HeartDiseaseorAttack,
                             "0 = 'No Infarto'; 1 = 'Infarto'", as.factor = TRUE)
 # HvyAlcoholConsump
 diabetes_df$HvyAlcoholConsump_cat <- recode(diabetes_df$HvyAlcoholConsump,
-                            "0 = 'No Consumo'; 1 = 'Infarto'", as.factor = TRUE)
+                            "0 = 'No Consumo'; 1 = 'Consumo'", as.factor = TRUE)
 # Sexo
 diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
                                 "0 = 'Mujer' ;1 = 'Hombre'", as.factor = TRUE)
@@ -246,13 +246,27 @@ Hacemos las gráficas de las variables de interés.
 
 ```{r}
 # Estudios Gráficos
-par(mfrow=c(2,2))
+par(mfrow=c(2,3))
 # Diabetes_12
 plot(diabetes_df$Diabetes_012_cat, main = "Tipo de Diabetes",
      xlab = "Tipo", ylab = "Frecuencia", col = c("deepskyblue1"))
 # BMI
 hist(diabetes_df$BMI, freq = F, main = "Histograma Índice de Masa Corporal",
      xlab = "IMC", ylab = "Frecuencia", col = c("darkolivegreen2"))
+
+# HighBP
+plot(diabetes_df$HighBP_cat, main = "Presión arterial",
+     xlab = "PA", ylab = "Frecuencia", col = c("coral"))
+# HighChol
+plot(diabetes_df$HighChol_cat, main = "Colesterol",
+     xlab = "Colesterol", ylab = "Frecuencia", col = c("cornsilk1"))
+# Age
+plot(diabetes_df$Age_cat, main = "Edad",
+     xlab = "Edad", ylab = "Frecuencia", col = c("darkorchid1"))
+# Sex
+plot(diabetes_df$Sex_cat, main = "Sexo",
+     xlab = "sexo", ylab = "Frecuencia", col = c("aquamarine2"))
+
 ```
 
 
