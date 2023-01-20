@@ -242,6 +242,19 @@ table(is.null(diabetes_df))
 summary(diabetes_df)
 ```
 
+Hacemos las gráficas de las variables de interés.
+
+```{r}
+# Estudios Gráficos
+par(mfrow=c(2,2))
+# Diabetes_12
+plot(diabetes_df$Diabetes_012_cat, main = "Tipo de Diabetes",
+     xlab = "Tipo", ylab = "Frecuencia", col = c("deepskyblue1"))
+# BMI
+hist(diabetes_df$BMI, freq = F, main = "Histograma Índice de Masa Corporal",
+     xlab = "IMC", ylab = "Frecuencia", col = c("darkolivegreen2"))
+```
+
 
 # 6) 
 ## Preguntas generales
