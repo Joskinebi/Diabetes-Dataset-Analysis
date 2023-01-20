@@ -102,6 +102,55 @@ head(diabetes_csv)
 tail(diabetes_csv)
 ```
 
+# 3)
+
+Hacemos un data frame con las variables que nos interesan.
+
+```{r}
+# Hacemos un data frame con las variables que nos interesan
+diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker, 
+                    Stroke, HeartDiseaseorAttack, HvyAlcoholConsump, Sex, Age, 
+                    Education, Income
+                    FROM diabetes_csv')
+```
+
+Recodificamos y parametrizamos algunas variables.
+
+```{r recodificación}
+# Diabetes_012
+diabetes_df$Diabetes_012_cat <- recode(diabetes_df$Diabetes_012,
+      "0 = 'No Diabetes' ; 1 = 'Prediabetes'; 2 = 'Diabetes'", as.factor = TRUE)
+# HighBP
+diabetes_df$HighBP_cat <- recode(diabetes_df$HighBP, "0 = 'PA No Alta' ; 
+                                 1 = 'PA Alta'", as.factor = TRUE)
+# HighChol
+diabetes_df$HighChol_cat <- recode(diabetes_df$HighChol,
+           "0 = 'Colesterol No Alto' ; 1 = 'Colesterol Alto'", as.factor = TRUE)
+# Smoker
+diabetes_df$Smoker_cat <- recode(diabetes_df$Smoker, "0 = 'No ha fumado' ; 
+                                 1 = 'Ha fumado'", as.factor = TRUE)
+# Stroke
+diabetes_df$Stroke_cat <- recode(diabetes_df$Stroke, "0 = 'No Derrame Cerebral'; 
+                                 1 = 'Derrame Cerebral'", as.factor = TRUE)
+# HeartDiseaseorAttack
+diabetes_df$HeartDiseaseorAttack_cat <- recode(diabetes_df$HeartDiseaseorAttack,
+                            "0 = 'No Infarto'; 1 = 'Infarto'", as.factor = TRUE)
+# HvyAlcoholConsump
+diabetes_df$HvyAlcoholConsump_cat <- recode(diabetes_df$HvyAlcoholConsump,
+                            "0 = 'No Consumo'; 1 = 'Infarto'", as.factor = TRUE)
+# Sexo
+diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
+                                "0 = 'Mujer' ;1 = 'Hombre'", as.factor = TRUE)
+# Edad
+diabetes_df$Age_cat <- recode(diabetes_df$Age, "1 = 'Edad_18_24'; 
+        2 = 'Edad_25_29'; 3 = 'Edad_30_34'; 4 = 'Edad_35_39'; 5 = 'Edad_40_44'
+        6 = 'Edad_45_49'; 7 = 'Edad_50_54'; 8 = 'Edad_55_59'; 9 = 'Edad_60_64'
+        10 = 'Edad_65_69'; 11 = 'Edad_70_74'; 12 = 'Edad_75_79'; 
+        13 = 'Edad_80_mas'", as.factor = TRUE)
+```
+
+
+
 ## Variables del dataset
 
  * Diabetes_012: 0 = no diabetes 1 = prediabetes 2 = diabetes
