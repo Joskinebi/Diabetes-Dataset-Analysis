@@ -2,8 +2,9 @@
 title: "Analysis of Diabetes Health Indicators / Dataset by Behavioral Risk Factor Surveillance System"
 author: "Sheddad Kaid-Salah Ferrón / Juan José Tirado Pulido"
 note: "The survey was established in 1984. Data are collected monthly in all 50 states, Puerto Rico, the U.S. Virgin islands, and Guam."
-date: "January 2023"
+date: "Enero 2023"
 output: 
+  pdf_document: default
   cleanrmd::html_document_clean: 
     toc: true
     toc_float: true
@@ -15,7 +16,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, include=FALSE}
+```{r librerías, include=FALSE}
 library('ggplot2')
 library(sqldf)
 library(RSQLite)
@@ -57,7 +58,7 @@ transportarla desde la sangre hasta las células.
 
 Existen dos tipos principales de diabetes: tipo 1 y tipo 2.
 
-La **diabetes tipo 1** es un trastorno autoinmune en el cual el sistema 
+La diabetes **tipo 1** es un trastorno autoinmune en el cual el sistema 
 inmunitario del cuerpo ataca y destruye las células del páncreas que producen 
 insulina. Esto resulta en una falta completa de insulina, y las personas con 
 diabetes tipo 1 deben recibir inyecciones de insulina o usar una bomba de 
@@ -201,22 +202,17 @@ diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
                                 "0 = 'Mujer' ;1 = 'Hombre'", as.factor = TRUE)
 # Edad
 diabetes_df$Age_cat <- recode(diabetes_df$Age, "1 = 'Edad_18_24'; 
-        2 = 'Edad_25_29'; 3 = 'Edad_30_34'; 4 = 'Edad_35_39'; 5 = 'Edad_40_44'
-        6 = 'Edad_45_49'; 7 = 'Edad_50_54'; 8 = 'Edad_55_59'; 9 = 'Edad_60_64'
+        2 = 'Edad_25_29'; 3 = 'Edad_30_34'; 4 = 'Edad_35_39'; 5 = 'Edad_40_44';
+        6 = 'Edad_45_49'; 7 = 'Edad_50_54'; 8 = 'Edad_55_59'; 9 = 'Edad_60_64';
         10 = 'Edad_65_69'; 11 = 'Edad_70_74'; 12 = 'Edad_75_79'; 
         13 = 'Edad_80_mas'", as.factor = TRUE)
 ```
 
-
-# 4)
-
-Exploremos el tipo de archivos que se importarán y las variables relevantes de estudio.
+Exploramos el tipo de archivos que se han importado
 
 ```{r}
-diabetes_df <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
-                             header = TRUE, strip.white = TRUE)
-#Quitando NA's de dataframe
-diabetes_df[is.na(diabetes_df)] <- 0
+# Revisamos el tipo de variables
+str(diabetes_df)
 
 #Mostramos los nombres de las variables
 names(diabetes_df)
@@ -228,16 +224,23 @@ head(diabetes_df)
 tail(diabetes_df)
 ```
 
-Revisamos el tipo de variables
-```{r}
-str(diabetes_df)
-```
-Resumen estadístico
+# 4)
+
+Realizamos un análisis descriptivo de los datos.
 
 ```{r}
+# Mostramos cuántos valores perdidos hay en la tabla
+table(is.na(diabetes_df))
+
+# Posición de NA por columna (variable)
+apply(is.na(diabetes_df), 2, which)
+
+# Buscamos si hay nulos
+table(is.null(diabetes_df))
+
+# Hacemos un resumen estadístico
 summary(diabetes_df)
 ```
-
 
 
 # 6) 
@@ -260,13 +263,13 @@ Estamos revisando la salud general de las mujeres que sienten emociones negativa
 
 ```{r}
 #Women with stable mental health = 0 days of no problems.
-women_with_stable_mental_health <- subset(diabetes_df, 
+women_with_stable_mental_health <- subset(diabetes_csv, 
                                        diabetes_df$MentHlth == 0 &
                                        diabetes_df$Sex == 0)
 
 #Women with more or equal than 10 days feeling not good with their mental health
 women_with_mental_health_problems_more_than_10_days_a_month <-             
-                                       subset(diabetes_df, 
+                                       subset(diabetes_csv, 
                                        diabetes_df$MentHlth >= 10 &
                                        diabetes_df$Sex == 0)
 
@@ -284,14 +287,14 @@ Hagamos lo mismo para los hombres
 
 ```{r}
 
-men_with_stable_mental_health <- subset(diabetes_df, 
-                                        diabetes_df$MentHlth == 0 &
-                                        diabetes_df$Sex == 1)
+men_with_stable_mental_health <- subset(diabetes_csv, 
+                                        diabetes_csv$MentHlth == 0 &
+                                        diabetes_csv$Sex == 1)
 
 #Men with more or equal than 10 days feeling not good with their mental health
-men_with_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_df,
-                                                                  diabetes_df$MentHlth == 0 &
-                                                                  diabetes_df$Sex == 1)
+men_with_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_csv,
+                                                                  diabetes_csv$MentHlth == 0 &
+                                                                  diabetes_csv$Sex == 1)
 
 colMeans(men_with_mental_health_problems_more_than_10_days_a_month[c('BMI',
                                                  'GenHlth', 
