@@ -286,59 +286,47 @@ En primer lugar, exploraremos el conjunto de datos y al final del estudio podrem
 
 Lo que estamos haciendo ahora es verificar la salud general utilizando la salud mental como una forma para subdividir el conjunto de datos. ¿Por qué elegimos explorar esto? Para entender si la salud mental lleva a trastornos alimentarios, que pueden conducir a patrones poco saludables y finalmente a la diabetes tipo II.
 
-Estamos revisando la salud general de las mujeres que sienten emociones negativas 10 o más días al mes.
+Vamos a estudiar tres conjuntos:
+ * Todos los hombres y mujeres.
+ * Hombres y mujeres que no sienten emociones negativas.
+ * Hombres y mujeres que sienten emociones negativas 10 o más días al mes.
 
 ```{r}
+#All women in the dataset
+all_women <- subset(diabetes_csv,
+                    diabetes_csv$MentHlth == 0 &
+                    diabetes_csv$Sex == 0)
+
 #Women with stable mental health = 0 days of no problems.
-women_with_stable_mental_health <- subset(diabetes_csv, 
-                                       diabetes_df$MentHlth == 0 &
-                                       diabetes_df$Sex == 0)
+women_stable_mental_health <- subset(diabetes_csv, 
+                                       diabetes_csv$MentHlth == 0 &
+                                       diabetes_csv$Sex == 0)
 
 #Women with more or equal than 10 days feeling not good with their mental health
-women_with_mental_health_problems_more_than_10_days_a_month <-             
+women_mental_health_problems_more_than_10_days_a_month <-             
                                        subset(diabetes_csv, 
-                                       diabetes_df$MentHlth >= 10 &
-                                       diabetes_df$Sex == 0)
+                                       diabetes_csv$MentHlth >= 10 &
+                                       diabetes_csv$Sex == 0)
 
-colMeans(women_with_mental_health_problems_more_than_10_days_a_month[c('BMI',
-                                                              'GenHlth', 
-                                                              'MentHlth', 
-                                                              'PhysHlth',
-                                                              'Age')], 
-         na.rm = TRUE)
-```
+#All men in the dataset
+all_men <- subset(diabetes_csv,
+                    diabetes_csv$MentHlth == 0 &
+                    diabetes_csv$Sex == 1)
 
-Esto significa que la media de las mujeres que se sienten psicológicamente mal 10 o más días tiene un IMC mayor a 24.9, lo cual podríamos considerar como sobrepeso. Además, la media de problemas de salud física es de 11.8 días al mes, y la media de edad está entre los 50 y 54 años. 
-
-Hagamos lo mismo para los hombres
-
-```{r}
-
-men_with_stable_mental_health <- subset(diabetes_csv, 
+#Men with stable mental health = 0 days of no problems.
+men_stable_mental_health <- subset(diabetes_csv, 
                                         diabetes_csv$MentHlth == 0 &
                                         diabetes_csv$Sex == 1)
 
 #Men with more or equal than 10 days feeling not good with their mental health
-men_with_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_csv,
-                                                                  diabetes_csv$MentHlth == 0 &
-                                                                  diabetes_csv$Sex == 1)
-
-colMeans(men_with_mental_health_problems_more_than_10_days_a_month[c('BMI',
-                                                 'GenHlth', 
-                                                 'MentHlth', 
-                                                 'PhysHlth',
-                                                 'Age')], 
-         na.rm = TRUE) 
+men_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_csv,
+                                                    diabetes_csv$MentHlth == 0 &                                                     diabetes_csv$Sex == 1)
 ```
 
-La media de los hombres que se sienten psicológicamente mal 10 o más días tiene un IMC mayor a 24.9, lo cual podríamos considerar como sobrepeso. Además, la media de problemas de salud física es de 12 días al mes, y la media de edad está entre los 50 y 54 años. La media de la medición de salud general es 'regular'.
-
-No hay diferencia significativa entre hombres y mujeres.
-
-Ahora vamos a realizar la siguiente investigación:
+Para todos los dataset que hemos generado más arriba, vamos a crear un resumen con la siguiente información: BMI, PhysAct, Cardiopathy, Income, Age. Agrupado por Diab_012, HighBP, HighCol.
 
 ```{r}
-diabetes_health_query <- function(gender_dataset) {
+diabetes_bp_chol_summary <- function(gender_dataset) {
   return(paste("
     SELECT 
       Diabetes_012 as Diab_012, 
@@ -356,13 +344,21 @@ diabetes_health_query <- function(gender_dataset) {
 ```
 
 ```{r}
-sqldf(diabetes_health_query("women_with_stable_mental_health"))
+summary_all_women <- sqldf(diabetes_bp_chol_summary("all_women"))
+summary_all_women
+
+summary_women_stable_mental_health <- sqldf(diabetes_bp_chol_summary("women_stable_mental_health"))
+summary_women_stable_mental_health
+
+summary_women_mental_health_problems_10days <- sqldf(
+  diabetes_bp_chol_summary("women_mental_health_problems_more_than_10_days_a_month"))
+summary_women_mental_health_problems_10days
 ```
 
 ```{r}
-sqldf(diabetes_health_query("women_with_mental_health_problems_more_than_10_days_a_month"))
+
 ```
-Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
+De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
 
  * Tener menor poder adquisitivo, lo que puede darnos una pista de que su alimentación podría ser de menor calidad.
  * Hacer menos ejercicio.
@@ -374,14 +370,57 @@ Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más i
 
 También podemos comprobar que, en ambos resultados, la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
 
+Veamos relaciones entre variables: 
+
+ * Income - BMI
+
+```{r}
+lm_all_women <- lm(BMI ~ Income, 
+                   data = all_women)
+lm_women_stable_mental_health <- lm(BMI ~ Income, 
+                                    data = women_stable_mental_health)
+
+lm_women_mental_health_problems_more_than_10_days_a_month <- lm(
+  BMI ~ Income, 
+  data = women_mental_health_problems_more_than_10_days_a_month)
+
+ggplot(all_women, 
+       aes(x = Income, y = BMI, color = dataset)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, 
+              formula = lm_all_women) +
+  geom_smooth(method = "lm", se = FALSE, 
+              formula = lm_women_stable_mental_health, 
+              linetype = "dashed") +
+  geom_smooth(method = "lm", se = FALSE, 
+              formula = lm_women_mental_health_problems_more_than_10_days_a_month, 
+              linetype = "dotted") +
+  scale_color_manual(values = c("Dataset 1" = "blue", "Dataset 2" = "green", "Dataset 3" = "red"))
+```
+
+ * Cardiopathy - High Colesterol
+ 
+```{r}
+ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+```
+ 
 Realizaremos lo mismo para los hombres
 
 ```{r}
-sqldf(diabetes_health_query("men_with_stable_mental_health"))
+summary_men_stable_mental_health <- sqldf(
+  diabetes_bp_chol_summary("men_stable_mental_health"))
 ```
 
 ```{r}
-sqldf(diabetes_health_query("men_with_mental_health_problems_more_than_10_days_a_month"))
+summary_women_mental_health_problems_10days <- sqldf(
+  diabetes_bp_chol_summary("men_mental_health_problems_more_than_10_days_a_month"))
 ```
 
 Con relación a las mujeres, encontramos que los hombres:
@@ -396,19 +435,4 @@ Los hombres con inestabilidad emocional con respecto a los más estables tienden
  * Tienen un menor poder adquisitivo.
  * Mayor cantidad de cardiopatías.
  * Tener mayor porcentaje con colesterol alto, presión arterial y diabetes (casi el doble).
- 
- ## Modelos que representan la relación que tienen el IMC, el tabaco, el alcohol con la diabetes
- 
-¿Hay valores faltantes hay para cada variable? 
 
-```{r}
-any(is.na(diabetes_df))
-```
-
-Veamos cuanta proporcion de individuos no tienen diabetes, tienen prediabetes y diabetes:
-
-```{r}
-ggplot(diabetes_df, aes(Diabetes_012_cat)) +
-  geom_bar(aes(y=..count../sum(..count..))) +
-  scale_y_continuous(labels = percent_format())
-```
