@@ -94,62 +94,13 @@ de datos.
 
 ```{r}
 # Importamos el fichero 
-diabetes_csv = read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv", 
+diabetes_csv = read.csv("diabetes_012_health_indicators_BRFSS2015.csv", 
                      header = TRUE, sep = ",")
 # Mostramos los primeros datos
 head(diabetes_csv)
 # Mostramos los últimos datos
 tail(diabetes_csv)
 ```
-
-# 3)
-
-Hacemos un data frame con las variables que nos interesan.
-
-```{r}
-# Hacemos un data frame con las variables que nos interesan
-diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker, 
-                    Stroke, HeartDiseaseorAttack, HvyAlcoholConsump, Sex, Age, 
-                    Education, Income
-                    FROM diabetes_csv')
-```
-
-Recodificamos y parametrizamos algunas variables.
-
-```{r recodificación}
-# Diabetes_012
-diabetes_df$Diabetes_012_cat <- recode(diabetes_df$Diabetes_012,
-      "0 = 'No Diabetes' ; 1 = 'Prediabetes'; 2 = 'Diabetes'", as.factor = TRUE)
-# HighBP
-diabetes_df$HighBP_cat <- recode(diabetes_df$HighBP, "0 = 'PA No Alta' ; 
-                                 1 = 'PA Alta'", as.factor = TRUE)
-# HighChol
-diabetes_df$HighChol_cat <- recode(diabetes_df$HighChol,
-           "0 = 'Colesterol No Alto' ; 1 = 'Colesterol Alto'", as.factor = TRUE)
-# Smoker
-diabetes_df$Smoker_cat <- recode(diabetes_df$Smoker, "0 = 'No ha fumado' ; 
-                                 1 = 'Ha fumado'", as.factor = TRUE)
-# Stroke
-diabetes_df$Stroke_cat <- recode(diabetes_df$Stroke, "0 = 'No Derrame Cerebral'; 
-                                 1 = 'Derrame Cerebral'", as.factor = TRUE)
-# HeartDiseaseorAttack
-diabetes_df$HeartDiseaseorAttack_cat <- recode(diabetes_df$HeartDiseaseorAttack,
-                            "0 = 'No Infarto'; 1 = 'Infarto'", as.factor = TRUE)
-# HvyAlcoholConsump
-diabetes_df$HvyAlcoholConsump_cat <- recode(diabetes_df$HvyAlcoholConsump,
-                            "0 = 'No Consumo'; 1 = 'Infarto'", as.factor = TRUE)
-# Sexo
-diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
-                                "0 = 'Mujer' ;1 = 'Hombre'", as.factor = TRUE)
-# Edad
-diabetes_df$Age_cat <- recode(diabetes_df$Age, "1 = 'Edad_18_24'; 
-        2 = 'Edad_25_29'; 3 = 'Edad_30_34'; 4 = 'Edad_35_39'; 5 = 'Edad_40_44'
-        6 = 'Edad_45_49'; 7 = 'Edad_50_54'; 8 = 'Edad_55_59'; 9 = 'Edad_60_64'
-        10 = 'Edad_65_69'; 11 = 'Edad_70_74'; 12 = 'Edad_75_79'; 
-        13 = 'Edad_80_mas'", as.factor = TRUE)
-```
-
-
 
 ## Variables del dataset
 
@@ -211,7 +162,7 @@ diabetes_df$Age_cat <- recode(diabetes_df$Age, "1 = 'Edad_18_24';
 
 # 3)
 
-Hacemos un data frame con las variables que nos interesan
+Hacemos un data frame con las variables que nos interesan.
 
 ```{r}
 # Hacemos un data frame con las variables que nos interesan
@@ -221,19 +172,46 @@ diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker,
                     FROM diabetes_csv')
 ```
 
-# Preguntas generales
+Recodificamos y parametrizamos algunas variables.
 
-Estas preguntas fueron propuestas en el sitio web ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
+```{r recodificación}
+# Diabetes_012
+diabetes_df$Diabetes_012_cat <- recode(diabetes_df$Diabetes_012,
+      "0 = 'No Diabetes' ; 1 = 'Prediabetes'; 2 = 'Diabetes'", as.factor = TRUE)
+# HighBP
+diabetes_df$HighBP_cat <- recode(diabetes_df$HighBP, "0 = 'PA No Alta' ; 
+                                 1 = 'PA Alta'", as.factor = TRUE)
+# HighChol
+diabetes_df$HighChol_cat <- recode(diabetes_df$HighChol,
+           "0 = 'Colesterol No Alto' ; 1 = 'Colesterol Alto'", as.factor = TRUE)
+# Smoker
+diabetes_df$Smoker_cat <- recode(diabetes_df$Smoker, "0 = 'No ha fumado' ; 
+                                 1 = 'Ha fumado'", as.factor = TRUE)
+# Stroke
+diabetes_df$Stroke_cat <- recode(diabetes_df$Stroke, "0 = 'No Derrame Cerebral'; 
+                                 1 = 'Derrame Cerebral'", as.factor = TRUE)
+# HeartDiseaseorAttack
+diabetes_df$HeartDiseaseorAttack_cat <- recode(diabetes_df$HeartDiseaseorAttack,
+                            "0 = 'No Infarto'; 1 = 'Infarto'", as.factor = TRUE)
+# HvyAlcoholConsump
+diabetes_df$HvyAlcoholConsump_cat <- recode(diabetes_df$HvyAlcoholConsump,
+                            "0 = 'No Consumo'; 1 = 'Infarto'", as.factor = TRUE)
+# Sexo
+diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
+                                "0 = 'Mujer' ;1 = 'Hombre'", as.factor = TRUE)
+# Edad
+diabetes_df$Age_cat <- recode(diabetes_df$Age, "1 = 'Edad_18_24'; 
+        2 = 'Edad_25_29'; 3 = 'Edad_30_34'; 4 = 'Edad_35_39'; 5 = 'Edad_40_44'
+        6 = 'Edad_45_49'; 7 = 'Edad_50_54'; 8 = 'Edad_55_59'; 9 = 'Edad_60_64'
+        10 = 'Edad_65_69'; 11 = 'Edad_70_74'; 12 = 'Edad_75_79'; 
+        13 = 'Edad_80_mas'", as.factor = TRUE)
+```
 
- * ¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas de si un individuo tiene diabetes?
- * ¿Cuáles son los factores de riesgo más predictivos del riesgo de diabetes?
- * ¿Podemos usar un subconjunto de los factores de riesgo para predecir con precisión si un individuo tiene diabetes?
- * ¿Podemos crear una forma abreviada de preguntas del BRFSS utilizando la selección de características para predecir con precisión si alguien puede tener diabetes o está en alto riesgo de diabetes?
-En primer lugar, exploraremos el conjunto de datos y al final del estudio podremos responderlas con precisión.
 
-# Sección 1
+# 4)
 
 Exploremos el tipo de archivos que se importarán y las variables relevantes de estudio.
+
 ```{r}
 diabetes_df <- read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv",
                              header = TRUE, strip.white = TRUE)
@@ -249,47 +227,6 @@ head(diabetes_df)
 #Mostramos los últimos datos
 tail(diabetes_df)
 ```
-Modificamos el data frame con las variables que nos interesan
-```{r}
-diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker,
-                    Stroke, HeartDiseaseorAttack, PhysActivity, 
-                    HvyAlcoholConsump, GenHlth, MentHlth, PhysHlth, Sex, Age, 
-                    Education, Income
-                    FROM diabetes_df')
-```
-
-Recodificamos y parametrizamos algunas variables:
-
-```{r recodificación}
-# Diabetes_012
-diabetes_df$Diabetes_012_cat <- recode(diabetes_df$Diabetes_012,
-                                "0 = 'No Diabetes' ; 1 = 'Prediabetes'; 
-                                2 = 'Diabetes'", as.factor = TRUE)
-# HighBP
-diabetes_df$HighBP_cat <- recode(diabetes_df$HighBP, "0 = 'PA No Alta' ; 
-                                 1 = 'PA Alta'", as.factor = TRUE)
-# HighChol
-diabetes_df$HighChol_cat <- recode(diabetes_df$HighChol,
-                                "0 = 'Colesterol No Alto' ; 
-                                1 = 'Colesterol Alto'", as.factor = TRUE)
-# Smoker
-diabetes_df$Smoker_cat <- recode(diabetes_df$Smoker, "0 = 'No ha fumado' ; 
-                                 1 = 'Ha fumado'", as.factor = TRUE)
-# Stroke
-diabetes_df$Stroke_cat <- recode(diabetes_df$Stroke, "0 = 'No Derrame Cerebral'; 
-                                 1 = 'Derrame Cerebral'", as.factor = TRUE)
-# HeartDiseaseorAttack
-diabetes_df$HeartDiseaseorAttack_cat <- recode(diabetes_df$HeartDiseaseorAttack,
-                                "0 = 'No Infarto'; 1 = 'Infarto'",
-                                as.factor = TRUE)
-# HvyAlcoholConsump
-diabetes_df$HvyAlcoholConsump_cat <- recode(diabetes_df$HvyAlcoholConsump,
-                                "0 = 'No Consumo'; 1 = 'Infarto'",
-                                as.factor = TRUE)
-# Sexo
-diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
-                                "0 = 'Mujer' ; 1 = 'Hombre'", as.factor = TRUE)
-```
 
 Revisamos el tipo de variables
 ```{r}
@@ -300,6 +237,20 @@ Resumen estadístico
 ```{r}
 summary(diabetes_df)
 ```
+
+
+
+# 6) 
+## Preguntas generales
+
+Estas preguntas fueron propuestas en el sitio web ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
+
+ * ¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas de si un individuo tiene diabetes?
+ * ¿Cuáles son los factores de riesgo más predictivos del riesgo de diabetes?
+ * ¿Podemos usar un subconjunto de los factores de riesgo para predecir con precisión si un individuo tiene diabetes?
+ * ¿Podemos crear una forma abreviada de preguntas del BRFSS utilizando la selección de características para predecir con precisión si alguien puede tener diabetes o está en alto riesgo de diabetes?
+En primer lugar, exploraremos el conjunto de datos y al final del estudio podremos responderlas con precisión.
+
 
 ## ¿La salud mental lleva a niveles más altos de colesterol, IMC, enfermedades cardíacas? ¿Tiene alguna relación con el nivel de ingresos?
 
