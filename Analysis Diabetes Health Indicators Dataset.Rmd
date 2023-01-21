@@ -622,7 +622,7 @@ ggplot(data = diabetes_df_cat, mapping = aes(x = BMI, colour = Diabetes_012_cat)
     facet_grid(. ~ Diabetes_012_cat) +
     theme(legend.position = "none")
 ```   
-Se observa que el grupo de 'No Diabetes tiene una distribución simétrica pero 
+Se observa que el grupo de 'No Diabetes' tiene una distribución simétrica pero 
 si nos fijamos en los otros dos grupos sus distribuciones son asimétricas con 
 una ligera tendencia hacia la derecha lo que puede indicar que un IMC elevado
 está relacionado con la diabetes.
@@ -649,7 +649,7 @@ plot(anova_bmi_dia)
 
 Claramente tenemos que rechazar la hipótesis nula:
 
-p-valor = 2.e-16 < 0.05. Rechazamos la hipótesis nula H0.
+p-valor = 2.e-16 < 0.05. Rechazamos la hipótesis nula Ho.
 
 ## Test No Paramétrico
 
@@ -662,7 +662,7 @@ distribuciones.
 kruskal.test(BMI ~ Diabetes_012_cat, data = diabetes_df_cat)
 ```
 
-Rechazamos la hipótesis nula. El test haya significancia en la diferencia de al 
+Rechazamos la hipótesis nula. El test halla significancia en la diferencia de al 
 menos dos grupos.
 
 # 8) Conclusiones
@@ -673,6 +673,6 @@ diabetes.
 El estudio no ha sido concluyente. Tan solo hemos podido relacionar el hecho de 
 que los tres grupos tienen una distribución significativamente distinta.
 De las distribuciones hemos podido ver que podría ser ser suceptible que a
-mayor IMC más probabilidades de padecer pre diabetes o diabetes pero se debería
+mayor IMC más probabilidades de padecer prediabetes o diabetes pero se debería
 hacer un estudio más profundo como por ejemplo un estudio post-hoc de 
-comparacionespara saber que dos grupos difieren entre ellos.
+comparaciones para saber qué dos grupos difieren entre ellos.
