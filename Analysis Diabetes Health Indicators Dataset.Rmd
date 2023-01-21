@@ -25,7 +25,7 @@ library(car)
 library(ggpubr)
 ```
 
-# 1)
+# 1) Fuente de los Datos
 
 Los datos que hemos utilizado se han sacado de la siguiente fuente:
 
@@ -87,7 +87,7 @@ sangre puede causar graves problemas:
 * Las mujeres embarazadas también pueden desarrollar diabetes, 
 llamada diabetes gestacional.
 
-# 2)
+# 2) Importación de datos y variables de estudio
 
 Importa los datos del fichero diabetes_012_health_indicators_BRFSS2015.csv, que
 contiene los datos que hemos descrito. Guarda estos datos en un data frame 
@@ -103,8 +103,6 @@ head(diabetes_csv)
 # Mostramos los últimos datos
 tail(diabetes_csv)
 ```
-
-
 
 ## Variables del dataset
 
@@ -164,7 +162,7 @@ tail(diabetes_csv)
 
  * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
 
-# 3)
+# 3) Exploración y análisis de los datos
 
 Hacemos un data frame con las variables que nos interesan.
 
@@ -274,7 +272,10 @@ plot(diabetes_df_cat$Age_cat, main = "Edad",
 plot(diabetes_df_cat$Sex_cat, main = "Sexo",
      xlab = "sexo", ylab = "Frecuencia", col = c("aquamarine2"))
 ```
-#5) Análisis de datos
+
+# 5) Análisis de datos
+
+## Correlación
 
 Calculamos la matriz de correlación del conjunto de datos y la representación
 gráfica que muestre la relación de todas las variables.
@@ -288,13 +289,12 @@ Podemos ver que hay algunas pequeñas correlaciones entre ciertas variables.
 A pesar de que obtenemos relaciones interesantes nos centramos en las variables 
 que creemos que son relevantes para nuestro estudio.
 
-## Correlación
 
 ```{r}
 # Realizamos diagramas de puntos de la relación entre variables
-pairs(~diabetes_df$Diabetes_012 + diabetes_df$BMI + diabetes_df$HighBP + 
-        diabetes_df$HighChol + diabetes_df$Sex + diabetes_df$Age + 
-        diabetes_df$Education)
+#pairs(~diabetes_df$Diabetes_012 + diabetes_df$BMI + diabetes_df$HighBP + 
+#        diabetes_df$HighChol + diabetes_df$Sex + diabetes_df$Age + 
+#        diabetes_df$Education)
 ```
 
 ## Análisis de regresión
@@ -311,10 +311,6 @@ summary(rm_diabetes_bmi)
 plot(diabetes_df$Diabetes_012, diabetes_df$BMI, xlab="Tipo diabetes", ylab="BMI")
 abline(rm_diabetes_bmi)
 ```
-
-
-
-
 
 # 6) Estudio Probabilístico
 
@@ -536,7 +532,7 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental no estable")
 ```
 
-# 7) Estudio ANOVA entre el BMI y Diabetes_012 
+# 7) Estudio ANOVA entre el IMC y Diabetes_012 
 
 Queremos ver si hay una relación entre el índice de masa corporal (BMI), 
 variable cuantitativa, y la variable cualitativa Diabetes_012_cat.
@@ -601,7 +597,7 @@ by(data=diabetes_df,INDICES =diabetes_df$Diabetes_012,FUN=function(x){lillie.tes
 
 vemos que el p-valor < 0.05 por lo que rechazamos normalidad.
 
-## homocedasticidad
+## Homocedasticidad
 
 Evaluamos la homocedasticidad, la varianza constante entre grupos. El Test de 
 Levene se trata de un test no paramétrico que compara las varianzas basándose en
@@ -615,7 +611,7 @@ leveneTest(BMI ~ Diabetes_012_cat, data = diabetes_df_cat, center = "median")
 Vemos que el p-valor es significativo por lo que se detecta falta de 
 homocedasticidad. No hay una varianza constante entre los grupos.
 
-# Distribución 
+## Distribución 
 
 Vemos que forma tiene las distribuciones de los tres grupos
 
@@ -680,7 +676,3 @@ De las distribuciones hemos podido ver que podría ser ser suceptible que a
 mayor IMC más probabilidades de padecer pre diabetes o diabetes pero se debería
 hacer un estudio más profundo como por ejemplo un estudio post-hoc de 
 comparacionespara saber que dos grupos difieren entre ellos.
-
-
-
-Hay que tener en c
