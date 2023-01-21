@@ -324,7 +324,6 @@ men_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_csv,
 ```
 
 Para todos los dataset que hemos generado más arriba, vamos a crear un resumen con la siguiente información: BMI, PhysAct, Cardiopathy, Income, Age. Agrupado por Diab_012, HighBP, HighCol.
-
 ```{r}
 diabetes_bp_chol_summary <- function(gender_dataset) {
   return(paste("
@@ -344,21 +343,19 @@ diabetes_bp_chol_summary <- function(gender_dataset) {
 ```
 
 ```{r}
-summary_all_women <- sqldf(diabetes_bp_chol_summary("all_women"))
-summary_all_women
+summary_women_stable_mental_health <- sqldf(
+  diabetes_bp_chol_summary("women_stable_mental_health"))
 
-summary_women_stable_mental_health <- sqldf(diabetes_bp_chol_summary("women_stable_mental_health"))
 summary_women_stable_mental_health
-
-summary_women_mental_health_problems_10days <- sqldf(
-  diabetes_bp_chol_summary("women_mental_health_problems_more_than_10_days_a_month"))
-summary_women_mental_health_problems_10days
 ```
 
 ```{r}
+summary_women_mental_health_problems_10days <- sqldf(
+  diabetes_bp_chol_summary("women_mental_health_problems_more_than_10_days_a_month"))
 
+summary_women_mental_health_problems_10days
 ```
-De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
+Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
 
  * Tener menor poder adquisitivo, lo que puede darnos una pista de que su alimentación podría ser de menor calidad.
  * Hacer menos ejercicio.
@@ -375,40 +372,68 @@ Veamos relaciones entre variables:
  * Income - BMI
 
 ```{r}
-lm_all_women <- lm(BMI ~ Income, 
-                   data = all_women)
-lm_women_stable_mental_health <- lm(BMI ~ Income, 
-                                    data = women_stable_mental_health)
 
-lm_women_mental_health_problems_more_than_10_days_a_month <- lm(
-  BMI ~ Income, 
-  data = women_mental_health_problems_more_than_10_days_a_month)
+library(ggpubr)
 
-ggplot(all_women, 
-       aes(x = Income, y = BMI, color = dataset)) +
+# Create the first ggplot
+p1 <- ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "solid", size = 1.0) +
+  labs(title = "Stable Mental Health", x = "Income", y = "BMI")
+
+# Create the second ggplot
+p2 <- ggplot(summary_women_mental_health_problems_10days, aes(x = Income, y = BMI)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red", linetype = "solid", size = 1.0) +
+  labs(title = "Mental Health Problems", x = "Income", y = "BMI")
+
+# Use ggarrange to combine the two plots
+ggarrange(p1, p2, ncol = 2, align = "h",
+          common.legend = TRUE, legend = "bottom")
+
+ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+ggplot(summary_women_mental_health_problems_10days, aes(x = Income, y = BMI)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+lm_stable_mental_health <- lm(BMI ~ Income, data = summary_women_stable_mental_health)
+lm_mental_health_problems_10days <- lm(BMI ~ Income, data = summary_women_mental_health_problems_10days)
+
+ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, 
-              formula = lm_all_women) +
-  geom_smooth(method = "lm", se = FALSE, 
-              formula = lm_women_stable_mental_health, 
-              linetype = "dashed") +
-  geom_smooth(method = "lm", se = FALSE, 
-              formula = lm_women_mental_health_problems_more_than_10_days_a_month, 
-              linetype = "dotted") +
-  scale_color_manual(values = c("Dataset 1" = "blue", "Dataset 2" = "green", "Dataset 3" = "red"))
+              formula = lm_stable_mental_health, 
+              color = "blue", linetype = "solid", 
+              size = 1.5, 
+              show.legend = TRUE, 
+              aes(label = "Stable Mental Health")) +
+  geom_smooth(data = summary_women_mental_health_problems_10days, 
+              method = "lm", se = FALSE, 
+              formula = lm_mental_health_problems_10days, 
+              color = "red", linetype = "dashed", 
+              size = 1.5, 
+              show.legend = TRUE, 
+              aes(label = "Mental Health Problems")) +
+  theme(legend.position = "bottom")
 ```
 
  * Cardiopathy - High Colesterol
  
 ```{r}
-ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
+lm_stable_mental_health <- lm(BMI ~ Income, data = summary_women_stable_mental_health)
+lm_mental_health_problems_10days <- lm(BMI ~ Income, data = summary_women_mental_health_problems_10days)
 
 ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
-
+  geom_smooth(method = "lm", se = FALSE, 
+              formula = lm_stable_mental_health) +
+  geom_smooth(data = summary_women_mental_health_problems_10days, 
+              method = "lm", se = FALSE, 
+              formula = lm_mental_health_problems_10days, 
+              color = "red")
 ```
  
 Realizaremos lo mismo para los hombres
