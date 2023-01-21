@@ -22,6 +22,7 @@ library(sqldf)
 library(RSQLite)
 library(scales)
 library(car)
+library(ggpubr)
 ```
 
 # 1)
@@ -320,10 +321,11 @@ men_stable_mental_health <- subset(diabetes_csv,
 
 #Men with more or equal than 10 days feeling not good with their mental health
 men_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_csv,
-                                                    diabetes_csv$MentHlth == 0 &                                                     diabetes_csv$Sex == 1)
+                                                    diabetes_csv$MentHlth == 0 &                                                                                    diabetes_csv$Sex == 1)
 ```
 
 Para todos los dataset que hemos generado más arriba, vamos a crear un resumen con la siguiente información: BMI, PhysAct, Cardiopathy, Income, Age. Agrupado por Diab_012, HighBP, HighCol.
+
 ```{r}
 diabetes_bp_chol_summary <- function(gender_dataset) {
   return(paste("
@@ -342,12 +344,15 @@ diabetes_bp_chol_summary <- function(gender_dataset) {
 }
 ```
 
+Para las mujeres que son estables en cuanto a salud mental
+
 ```{r}
 summary_women_stable_mental_health <- sqldf(
   diabetes_bp_chol_summary("women_stable_mental_health"))
 
 summary_women_stable_mental_health
 ```
+Para las mujeres que son menos estables en cuanto a salud mental (más de 10 días al mes con problemas)
 
 ```{r}
 summary_women_mental_health_problems_10days <- sqldf(
@@ -355,6 +360,7 @@ summary_women_mental_health_problems_10days <- sqldf(
 
 summary_women_mental_health_problems_10days
 ```
+
 Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
 
  * Tener menor poder adquisitivo, lo que puede darnos una pista de que su alimentación podría ser de menor calidad.
@@ -367,73 +373,68 @@ Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más i
 
 También podemos comprobar que, en ambos resultados, la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
 
+Hemos creado una funcion para crear dos scatterplot y meterlos en el mismo 'frame' para poder comparar resultados:
+
+```{r}
+dos_scatter_plots_juntos <- function(primer_dataset, segundo_dataset, 
+                                     xvalue, yvalue, 
+                                     titulo_primer_scatter, titulo_segundo_scatter) {
+  
+  # Creamos el primer plot
+  primer_plot <- ggplot(primer_dataset, aes_string(x = xvalue, y = yvalue)) +
+    geom_point() +
+    geom_smooth(method = "lm", 
+                se = FALSE, 
+                color = "blue", 
+                linetype = "solid", 
+                size = 1.0) +
+    labs(title = titulo_primer_scatter, 
+         x = xvalue,
+         y = yvalue)
+
+  # Creamos el segundo plot
+  segundo_plot <- ggplot(segundo_dataset, aes_string(x = xvalue, y = yvalue)) +
+    geom_point() +
+    geom_smooth(method = "lm", 
+                se = FALSE, 
+                color = "red", 
+                linetype = "solid", 
+                size = 1.0) +
+    labs(title = titulo_segundo_scatter, 
+         x = xvalue, 
+         y = yvalue)
+
+  # Ponemos los dos plots juntos
+  ggarrange(primer_plot, 
+            segundo_plot,
+            ncol = 2, 
+            align = "h", 
+            common.legend = TRUE, 
+            legend = "bottom")
+}
+```
 Veamos relaciones entre variables: 
 
- * Income - BMI
-
-```{r}
-
-library(ggpubr)
-
-# Create the first ggplot
-p1 <- ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "solid", size = 1.0) +
-  labs(title = "Stable Mental Health", x = "Income", y = "BMI")
-
-# Create the second ggplot
-p2 <- ggplot(summary_women_mental_health_problems_10days, aes(x = Income, y = BMI)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "red", linetype = "solid", size = 1.0) +
-  labs(title = "Mental Health Problems", x = "Income", y = "BMI")
-
-# Use ggarrange to combine the two plots
-ggarrange(p1, p2, ncol = 2, align = "h",
-          common.legend = TRUE, legend = "bottom")
-
-ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
-
-ggplot(summary_women_mental_health_problems_10days, aes(x = Income, y = BMI)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
-
-lm_stable_mental_health <- lm(BMI ~ Income, data = summary_women_stable_mental_health)
-lm_mental_health_problems_10days <- lm(BMI ~ Income, data = summary_women_mental_health_problems_10days)
-
-ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, 
-              formula = lm_stable_mental_health, 
-              color = "blue", linetype = "solid", 
-              size = 1.5, 
-              show.legend = TRUE, 
-              aes(label = "Stable Mental Health")) +
-  geom_smooth(data = summary_women_mental_health_problems_10days, 
-              method = "lm", se = FALSE, 
-              formula = lm_mental_health_problems_10days, 
-              color = "red", linetype = "dashed", 
-              size = 1.5, 
-              show.legend = TRUE, 
-              aes(label = "Mental Health Problems")) +
-  theme(legend.position = "bottom")
-```
-
- * Cardiopathy - High Colesterol
+Income - BMI
  
 ```{r}
-lm_stable_mental_health <- lm(BMI ~ Income, data = summary_women_stable_mental_health)
-lm_mental_health_problems_10days <- lm(BMI ~ Income, data = summary_women_mental_health_problems_10days)
-
-ggplot(summary_women_stable_mental_health, aes(x = Income, y = BMI)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, 
-              formula = lm_stable_mental_health) +
-  geom_smooth(data = summary_women_mental_health_problems_10days, 
-              method = "lm", se = FALSE, 
-              formula = lm_mental_health_problems_10days, 
-              color = "red")
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+  
+Income - PhysAct
+  
+```{r}
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "PhysAct",
+                         "Salud mental estable",
+                         "Salud mental no estable")
 ```
  
 Realizaremos lo mismo para los hombres
@@ -441,10 +442,12 @@ Realizaremos lo mismo para los hombres
 ```{r}
 summary_men_stable_mental_health <- sqldf(
   diabetes_bp_chol_summary("men_stable_mental_health"))
+
+summary_men_stable_mental_health
 ```
 
 ```{r}
-summary_women_mental_health_problems_10days <- sqldf(
+summary_men_mental_health_problems_10days <- sqldf(
   diabetes_bp_chol_summary("men_mental_health_problems_more_than_10_days_a_month"))
 ```
 
@@ -461,3 +464,26 @@ Los hombres con inestabilidad emocional con respecto a los más estables tienden
  * Mayor cantidad de cardiopatías.
  * Tener mayor porcentaje con colesterol alto, presión arterial y diabetes (casi el doble).
 
+Veamos relaciones entre variables: 
+
+Income - BMI
+ 
+```{r}
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+  
+Income - PhysAct
+  
+```{r}
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "PhysAct",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
