@@ -98,8 +98,10 @@ de datos.
 # Importamos el fichero 
 diabetes_csv = read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv", 
                      header = TRUE, sep = ",")
+
 # Mostramos los primeros datos
 head(diabetes_csv)
+
 # Mostramos los últimos datos
 tail(diabetes_csv)
 ```
@@ -413,6 +415,7 @@ dos_scatter_plots_juntos <- function(primer_dataset, segundo_dataset,
             legend = "bottom")
 }
 ```
+
 Veamos relaciones entre variables: 
 
 Income - BMI
@@ -449,6 +452,8 @@ summary_men_stable_mental_health
 ```{r}
 summary_men_mental_health_problems_10days <- sqldf(
   diabetes_bp_chol_summary("men_mental_health_problems_more_than_10_days_a_month"))
+
+summary_men_mental_health_problems_10days
 ```
 
 Con relación a las mujeres, encontramos que los hombres:
@@ -487,3 +492,4 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental estable",
                          "Salud mental no estable")
 ```
+
