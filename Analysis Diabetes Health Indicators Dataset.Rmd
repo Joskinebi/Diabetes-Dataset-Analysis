@@ -13,7 +13,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
 
 ```{r librerías, include=FALSE}
@@ -316,19 +316,13 @@ abline(rm_diabetes_bmi)
 
 # 6) Estudio Probabilístico
 
-Lo que estamos haciendo ahora es verificar la salud general utilizando la salud mental como una forma para subdividir el conjunto de datos. ¿Por qué elegimos explorar esto? Para entender si la salud mental lleva a trastornos alimentarios, que pueden conducir a patrones poco saludables y finalmente a la diabetes tipo II.
+Lo que estamos haciendo ahora es verificar la salud general utilizando la salud mental como una forma para subdividir el conjunto de datos. ¿Por qué elegimos explorar esto? Para entender si una pobre salud mental lleva a trastornos alimentarios, que pueden conducir a patrones poco saludables y finalmente a la diabetes tipo II.
 
-Vamos a estudiar tres conjuntos:
- * Todos los hombres y mujeres.
- * Hombres y mujeres que no sienten emociones negativas.
+Vamos a estudiar dos conjuntos:
+ * Hombres y mujeres que no sienten emociones negativas. 
  * Hombres y mujeres que sienten emociones negativas 10 o más días al mes.
 
 ```{r}
-#All women in the dataset
-all_women <- subset(diabetes_df,
-                    diabetes_df$MentHlth == 0 &
-                    diabetes_df$Sex == 0)
-
 #Women with stable mental health = 0 days of no problems.
 women_stable_mental_health <- subset(diabetes_df, 
                                        diabetes_df$MentHlth == 0 &
@@ -339,11 +333,6 @@ women_mental_health_problems_more_than_10_days_a_month <-
                                        subset(diabetes_df, 
                                        diabetes_df$MentHlth >= 10 &
                                        diabetes_df$Sex == 0)
-
-#All men in the dataset
-all_men <- subset(diabetes_df,
-                    diabetes_df$MentHlth == 0 &
-                    diabetes_df$Sex == 1)
 
 #Men with stable mental health = 0 days of no problems.
 men_stable_mental_health <- subset(diabetes_df, 
@@ -377,26 +366,25 @@ diabetes_bp_chol_summary <- function(gender_dataset) {
 }
 ```
 
-Para las mujeres que son estables en cuanto a salud mental
-
 ```{r}
+# Para las mujeres que son estables en cuanto a salud mental
 summary_women_stable_mental_health <- sqldf(
   diabetes_bp_chol_summary("women_stable_mental_health"))
 
 summary_women_stable_mental_health
 ```
-Para las mujeres que son menos estables en cuanto a salud mental (más de 10 días al mes con problemas)
+
 
 ```{r}
+# Para las mujeres que son menos estables en cuanto a salud mental (más de 10 días al mes con problemas)
 summary_women_mental_health_problems_10days <- sqldf(
   diabetes_bp_chol_summary("women_mental_health_problems_more_than_10_days_a_month"))
 
 summary_women_mental_health_problems_10days
 ```
 
-Hemos creado una funcion para crear dos scatterplot y meterlos en el mismo 'frame' para poder comparar resultados:
-
 ```{r}
+# Hemos creado una funcion para crear dos scatterplot y meterlos en el mismo 'frame' para poder comparar resultados:
 dos_scatter_plots_juntos <- function(primer_dataset, segundo_dataset, 
                                      xvalue, yvalue, 
                                      titulo_primer_scatter, titulo_segundo_scatter) {
@@ -434,12 +422,9 @@ dos_scatter_plots_juntos <- function(primer_dataset, segundo_dataset,
             legend = "bottom")
 }
 ```
-
-Veamos relaciones entre variables: 
-
-Income - BMI
  
 ```{r}
+# Relacion Income - BMI en mujeres
 dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          summary_women_mental_health_problems_10days,
                          "Income",
@@ -448,10 +433,8 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental no estable")
 ```
   
-  
-Income - PhysAct
-  
 ```{r}
+# Relacion Income - PhysAct en mujeres
 dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          summary_women_mental_health_problems_10days,
                          "Income",
@@ -460,9 +443,9 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental no estable")
 ```
 
-PhysAct - BMI
 
 ```{r}
+# Relacion PhysAct - BMI en mujeres
 dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          summary_women_mental_health_problems_10days,
                          "PhysAct",
@@ -471,9 +454,10 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental no estable")
 ```
 
-Realizaremos lo mismo para los hombres
+\href{#womenconclusion}{\color{blue}{Conclusiones para el estudio en mujeres}}
 
 ```{r}
+# Para los hombres que son estables en cuanto a salud mental
 summary_men_stable_mental_health <- sqldf(
   diabetes_bp_chol_summary("men_stable_mental_health"))
 
@@ -481,17 +465,15 @@ summary_men_stable_mental_health
 ```
 
 ```{r}
+# Para los hombres que son menos estables en cuanto a salud mental (más de 10 días al mes con problemas)
 summary_men_mental_health_problems_10days <- sqldf(
   diabetes_bp_chol_summary("men_mental_health_problems_more_than_10_days_a_month"))
 
 summary_men_mental_health_problems_10days
 ```
 
-Veamos relaciones entre variables: 
-
-Income - BMI
- 
 ```{r}
+# Relacion Income - BMI en hombres
 dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          summary_women_mental_health_problems_10days,
                          "Income",
@@ -500,9 +482,8 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental no estable")
 ```
   
-Income - PhysAct
-  
 ```{r}
+# Relacion Income - PhysAct en hombres
 dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          summary_women_mental_health_problems_10days,
                          "Income",
@@ -511,9 +492,8 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental no estable")
 ```
 
-PhysAct - BMI
-
 ```{r}
+# Relacion PhysAct - BMI en hombres
 dos_scatter_plots_juntos(summary_men_stable_mental_health,
                          summary_men_mental_health_problems_10days,
                          "PhysAct",
@@ -521,6 +501,8 @@ dos_scatter_plots_juntos(summary_men_stable_mental_health,
                          "Salud mental estable",
                          "Salud mental no estable")
 ```
+
+# [Conclusiones para el estudio en hombres](#menconclusion)
 
 <<<<<<< HEAD
 =======
@@ -670,22 +652,7 @@ mayor IMC más probabilidades de padecer prediabetes o diabetes pero se debería
 hacer un estudio más profundo como por ejemplo un estudio post-hoc de 
 comparaciones para saber qué dos grupos difieren entre ellos.
 
-En cuanto a la predicción sobre si un dindividuo desarrollará diabetes, hemos con¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas 
-de si un individuo tiene diabetes?
-
-Está bien estudiado que la diabetes tipo II está asociada con
-niveles más altos de BMI juega un factor importante.
-
-## Preguntas propuestas en el sitio web ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
-
- * ¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas de si un individuo tiene diabetes?
-
-([BMI alto está asociado a la diabetes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4259868/))
-
-Por lo tanto nos hemos hecho una pregunta: Sería posible que el la salud mental, salario, 
-y la diabetes estén asociados a un BMI más alto? 
-
-Las respuestas han sido las siguientes:  
+## Relación salud mental, salario, IMC y actividad física (En mujeres) {#womenconclusion} 
 
 Por un lado, con las mujeres hemos encontrado que de media, las que tienen más inestabilidad emocional con respecto a las más estables tienden a:
 
@@ -699,7 +666,9 @@ Por un lado, con las mujeres hemos encontrado que de media, las que tienen más 
 
 También hemos podido observar que la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
 
-Con relación a las mujeres, encontramos que los hombres:
+## Relación salud mental, salario, IMC y actividad física (En hombres) {#menconclusion}
+
+Con relación a las mujeres, encontramos que los hombres: 
 
  - Son más propensos a cardiopatías. 
  - Tienen una actividad física mayor. 
@@ -710,15 +679,9 @@ Los hombres con inestabilidad emocional con respecto a los más estables tienden
  - Hacer menos actividad física.
  - Tienen un menor poder adquisitivo.
  - Mayor cantidad de cardiopatías.
- - Tener mayor porcentaje con colesterol alto, presión arterial y diabetes (casi el doble).
+ - Tener mayor porcentaje con colesterol alto, presión arterial y diabetes.
 
- * ¿Cuáles son los factores de riesgo más predictivos del riesgo de diabetes?
-
-Hemos hecho varias observaciones y es que también la variable Income influye sobre la cantidad de ejercicio físico
-
- * ¿Podemos usar un subconjunto de los factores de riesgo para predecir con precisión si un individuo tiene diabetes?
- * ¿Podemos crear una forma abreviada de preguntas del BRFSS utilizando la selección de características para predecir con precisión si alguien puede tener diabetes o está en alto riesgo de diabetes?
-
-Por lo tanto, nos hemos hecho una pregunta: 
-
+Hemos comprobado en ambos sexos que a mayor cantidad de Income, mayor cantidad 
+de ejercicio físico y menor IMC. 
+\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4259868/}{\color{blue}{Puesto que hemos encontrado un estudio que vincula la diabetes y la obesidad}} podríamos intuir que a mayores problemas mentales, mayor el IMC, por lo tanto mayor la probabilidad de desarrollar diabetes.
 
