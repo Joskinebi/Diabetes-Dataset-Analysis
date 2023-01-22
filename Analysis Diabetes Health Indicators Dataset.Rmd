@@ -25,7 +25,7 @@ library(car)
 library(ggpubr)
 ```
 
-# 1)
+# 1) Fuente de los Datos
 
 Los datos que hemos utilizado se han sacado de la siguiente fuente:
 
@@ -87,7 +87,7 @@ sangre puede causar graves problemas:
 * Las mujeres embarazadas también pueden desarrollar diabetes, 
 llamada diabetes gestacional.
 
-# 2)
+# 2) Importación de datos y variables de estudio
 
 Importa los datos del fichero diabetes_012_health_indicators_BRFSS2015.csv, que
 contiene los datos que hemos descrito. Guarda estos datos en un data frame 
@@ -164,47 +164,51 @@ tail(diabetes_csv)
 
  * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
 
-# 3)
+# 3) Exploración y análisis de los datos
 
 Hacemos un data frame con las variables que nos interesan.
 
 ```{r}
 # Hacemos un data frame con las variables que nos interesan
 diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker, 
-                    Stroke, HeartDiseaseorAttack, HvyAlcoholConsump, Sex, Age, 
+                    Stroke, HeartDiseaseorAttack, PhysActivity, 
+                    HvyAlcoholConsump, GenHlth, MentHlth, PhysHlth, Sex, Age, 
                     Education, Income
-                    FROM diabetes_csv')
+                    FROM diabetes_csv WHERE BMI > 15 AND BMI < 40')
 ```
 
-Recodificamos y parametrizamos algunas variables.
+Recodificamos y categorizamos algunas variables de interés.
 
 ```{r recodificación}
+# Data frame con las variables categorizadas
+diabetes_df_cat <- diabetes_df
+
 # Diabetes_012
-diabetes_df$Diabetes_012_cat <- recode(diabetes_df$Diabetes_012,
+diabetes_df_cat$Diabetes_012_cat <- recode(diabetes_df_cat$Diabetes_012,
       "0 = 'No Diabetes' ; 1 = 'Prediabetes'; 2 = 'Diabetes'", as.factor = TRUE)
 # HighBP
-diabetes_df$HighBP_cat <- recode(diabetes_df$HighBP, "0 = 'PA No Alta' ; 
+diabetes_df_cat$HighBP_cat <- recode(diabetes_df_cat$HighBP, "0 = 'PA No Alta' ; 
                                  1 = 'PA Alta'", as.factor = TRUE)
 # HighChol
-diabetes_df$HighChol_cat <- recode(diabetes_df$HighChol,
+diabetes_df_cat$HighChol_cat <- recode(diabetes_df_cat$HighChol,
            "0 = 'Colesterol No Alto' ; 1 = 'Colesterol Alto'", as.factor = TRUE)
 # Smoker
-diabetes_df$Smoker_cat <- recode(diabetes_df$Smoker, "0 = 'No ha fumado' ; 
+diabetes_df_cat$Smoker_cat <- recode(diabetes_df_cat$Smoker, "0 = 'No ha fumado' ; 
                                  1 = 'Ha fumado'", as.factor = TRUE)
 # Stroke
-diabetes_df$Stroke_cat <- recode(diabetes_df$Stroke, "0 = 'No Derrame Cerebral'; 
+diabetes_df_cat$Stroke_cat <- recode(diabetes_df_cat$Stroke, "0 = 'No Derrame Cerebral'; 
                                  1 = 'Derrame Cerebral'", as.factor = TRUE)
 # HeartDiseaseorAttack
-diabetes_df$HeartDiseaseorAttack_cat <- recode(diabetes_df$HeartDiseaseorAttack,
+diabetes_df_cat$HeartDiseaseorAttack_cat <- recode(diabetes_df_cat$HeartDiseaseorAttack,
                             "0 = 'No Infarto'; 1 = 'Infarto'", as.factor = TRUE)
 # HvyAlcoholConsump
-diabetes_df$HvyAlcoholConsump_cat <- recode(diabetes_df$HvyAlcoholConsump,
+diabetes_df_cat$HvyAlcoholConsump_cat <- recode(diabetes_df_cat$HvyAlcoholConsump,
                             "0 = 'No Consumo'; 1 = 'Consumo'", as.factor = TRUE)
 # Sexo
-diabetes_df$Sex_cat <- recode(diabetes_df$Sex,
+diabetes_df_cat$Sex_cat <- recode(diabetes_df_cat$Sex,
                                 "0 = 'Mujer' ;1 = 'Hombre'", as.factor = TRUE)
 # Edad
-diabetes_df$Age_cat <- recode(diabetes_df$Age, "1 = 'Edad_18_24'; 
+diabetes_df_cat$Age_cat <- recode(diabetes_df_cat$Age, "1 = 'Edad_18_24'; 
         2 = 'Edad_25_29'; 3 = 'Edad_30_34'; 4 = 'Edad_35_39'; 5 = 'Edad_40_44';
         6 = 'Edad_45_49'; 7 = 'Edad_50_54'; 8 = 'Edad_55_59'; 9 = 'Edad_60_64';
         10 = 'Edad_65_69'; 11 = 'Edad_70_74'; 12 = 'Edad_75_79'; 
@@ -227,7 +231,7 @@ head(diabetes_df)
 tail(diabetes_df)
 ```
 
-# 4)
+# 4) Análisis descriptivo de los datos
 
 Realizamos un análisis descriptivo de los datos.
 
@@ -251,41 +255,66 @@ Hacemos las gráficas de las variables de interés.
 # Estudios Gráficos
 par(mfrow=c(2,3))
 # Diabetes_12
-plot(diabetes_df$Diabetes_012_cat, main = "Tipo de Diabetes",
+plot(diabetes_df_cat$Diabetes_012_cat, main = "Tipo de Diabetes",
      xlab = "Tipo", ylab = "Frecuencia", col = c("deepskyblue1"))
 # BMI
-hist(diabetes_df$BMI, freq = F, main = "Histograma Índice de Masa Corporal",
+hist(diabetes_df$BMI, freq = F, main = "Índice de Masa Corporal",
      xlab = "IMC", ylab = "Frecuencia", col = c("darkolivegreen2"))
 
 # HighBP
-plot(diabetes_df$HighBP_cat, main = "Presión arterial",
+plot(diabetes_df_cat$HighBP_cat, main = "Presión arterial",
      xlab = "PA", ylab = "Frecuencia", col = c("coral"))
 # HighChol
-plot(diabetes_df$HighChol_cat, main = "Colesterol",
+plot(diabetes_df_cat$HighChol_cat, main = "Colesterol",
      xlab = "Colesterol", ylab = "Frecuencia", col = c("cornsilk1"))
 # Age
-plot(diabetes_df$Age_cat, main = "Edad",
+plot(diabetes_df_cat$Age_cat, main = "Edad",
      xlab = "Edad", ylab = "Frecuencia", col = c("darkorchid1"))
 # Sex
-plot(diabetes_df$Sex_cat, main = "Sexo",
+plot(diabetes_df_cat$Sex_cat, main = "Sexo",
      xlab = "sexo", ylab = "Frecuencia", col = c("aquamarine2"))
-
 ```
 
+# 5) Análisis de datos
 
-# 6) 
-## Preguntas generales
+## Correlación
 
-Estas preguntas fueron propuestas en el sitio web ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
+Calculamos la matriz de correlación del conjunto de datos y la representación
+gráfica que muestre la relación de todas las variables.
 
- * ¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas de si un individuo tiene diabetes?
- * ¿Cuáles son los factores de riesgo más predictivos del riesgo de diabetes?
- * ¿Podemos usar un subconjunto de los factores de riesgo para predecir con precisión si un individuo tiene diabetes?
- * ¿Podemos crear una forma abreviada de preguntas del BRFSS utilizando la selección de características para predecir con precisión si alguien puede tener diabetes o está en alto riesgo de diabetes?
-En primer lugar, exploraremos el conjunto de datos y al final del estudio podremos responderlas con precisión.
+```{r}
+# Calculamos el coeficiente de correlación de Pearson
+cor(x = diabetes_df, method = "pearson")
+```
+Podemos ver que hay algunas pequeñas correlaciones entre ciertas variables.
+
+A pesar de que obtenemos relaciones interesantes nos centramos en las variables 
+que creemos que son relevantes para nuestro estudio.
 
 
-## ¿La salud mental lleva a niveles más altos de colesterol, IMC, enfermedades cardíacas? ¿Tiene alguna relación con el nivel de ingresos?
+```{r}
+# Realizamos diagramas de puntos de la relación entre variables
+#pairs(~diabetes_df$Diabetes_012 + diabetes_df$BMI + diabetes_df$HighBP + 
+ #       diabetes_df$HighChol + diabetes_df$Sex + diabetes_df$Age + 
+  #      diabetes_df$Education)
+```
+
+## Análisis de regresión
+
+Hacemos un análisis de regresión entre la variable BMI y la variable 
+Diabetes_12.
+
+```{r}
+# modelo lineal de las variables Diabetes_12-BMI
+rm_diabetes_bmi <- lm(BMI~Diabetes_012, data = diabetes_df)
+summary(rm_diabetes_bmi)
+
+# Dibujamos la recta de mínimos cuadrados:
+plot(diabetes_df$Diabetes_012, diabetes_df$BMI, xlab="Tipo diabetes", ylab="BMI")
+abline(rm_diabetes_bmi)
+```
+
+# 6) Estudio Probabilístico
 
 Lo que estamos haciendo ahora es verificar la salud general utilizando la salud mental como una forma para subdividir el conjunto de datos. ¿Por qué elegimos explorar esto? Para entender si la salud mental lleva a trastornos alimentarios, que pueden conducir a patrones poco saludables y finalmente a la diabetes tipo II.
 
@@ -296,37 +325,39 @@ Vamos a estudiar tres conjuntos:
 
 ```{r}
 #All women in the dataset
-all_women <- subset(diabetes_csv,
-                    diabetes_csv$MentHlth == 0 &
-                    diabetes_csv$Sex == 0)
+all_women <- subset(diabetes_df,
+                    diabetes_df$MentHlth == 0 &
+                    diabetes_df$Sex == 0)
 
 #Women with stable mental health = 0 days of no problems.
-women_stable_mental_health <- subset(diabetes_csv, 
-                                       diabetes_csv$MentHlth == 0 &
-                                       diabetes_csv$Sex == 0)
+women_stable_mental_health <- subset(diabetes_df, 
+                                       diabetes_df$MentHlth == 0 &
+                                       diabetes_df$Sex == 0)
 
 #Women with more or equal than 10 days feeling not good with their mental health
 women_mental_health_problems_more_than_10_days_a_month <-             
-                                       subset(diabetes_csv, 
-                                       diabetes_csv$MentHlth >= 10 &
-                                       diabetes_csv$Sex == 0)
+                                       subset(diabetes_df, 
+                                       diabetes_df$MentHlth >= 10 &
+                                       diabetes_df$Sex == 0)
 
 #All men in the dataset
-all_men <- subset(diabetes_csv,
-                    diabetes_csv$MentHlth == 0 &
-                    diabetes_csv$Sex == 1)
+all_men <- subset(diabetes_df,
+                    diabetes_df$MentHlth == 0 &
+                    diabetes_df$Sex == 1)
 
 #Men with stable mental health = 0 days of no problems.
-men_stable_mental_health <- subset(diabetes_csv, 
-                                        diabetes_csv$MentHlth == 0 &
-                                        diabetes_csv$Sex == 1)
+men_stable_mental_health <- subset(diabetes_df, 
+                                        diabetes_df$MentHlth == 0 &
+                                        diabetes_df$Sex == 1)
 
 #Men with more or equal than 10 days feeling not good with their mental health
-men_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_csv,
-                                                    diabetes_csv$MentHlth == 0 &                                                                                    diabetes_csv$Sex == 1)
+men_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_df,
+                              diabetes_df$MentHlth == 0 & diabetes_df$Sex == 1)
 ```
 
-Para todos los dataset que hemos generado más arriba, vamos a crear un resumen con la siguiente información: BMI, PhysAct, Cardiopathy, Income, Age. Agrupado por Diab_012, HighBP, HighCol.
+Para todos los dataset que hemos generado más arriba, vamos a crear un resumen 
+con la siguiente información: BMI, PhysAct, Cardiopathy, Income, Age. 
+Agrupado por Diab_012, HighBP, HighCol.
 
 ```{r}
 diabetes_bp_chol_summary <- function(gender_dataset) {
@@ -362,18 +393,6 @@ summary_women_mental_health_problems_10days <- sqldf(
 
 summary_women_mental_health_problems_10days
 ```
-
-Hemos encontrado conclusiones muy interesantes. De media, las mujeres con más inestabilidad emocional con respecto a las más estables tienden a:
-
- * Tener menor poder adquisitivo, lo que puede darnos una pista de que su alimentación podría ser de menor calidad.
- * Hacer menos ejercicio.
- * Sufrir mayor número de cardiopatías.
- * Sufren alta presión arterial y colesterol más jóvenes. 
- * Son diagnosticados con diabetes más jóvenes.
- * Su BMI es de media más alto.
- * Sufren mayor percentual de pre y diabetes, alta presión arterial y alto coresterol.
-
-También podemos comprobar que, en ambos resultados, la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
 
 Hemos creado una funcion para crear dos scatterplot y meterlos en el mismo 'frame' para poder comparar resultados:
 
@@ -429,6 +448,7 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental no estable")
 ```
   
+  
 Income - PhysAct
   
 ```{r}
@@ -439,7 +459,18 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental estable",
                          "Salud mental no estable")
 ```
- 
+
+PhysAct - BMI
+
+```{r}
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "PhysAct",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+
 Realizaremos lo mismo para los hombres
 
 ```{r}
@@ -455,19 +486,6 @@ summary_men_mental_health_problems_10days <- sqldf(
 
 summary_men_mental_health_problems_10days
 ```
-
-Con relación a las mujeres, encontramos que los hombres:
-
- * Son más propensos a cardiopatías. 
- * Tienen una actividad física mayor. 
- * Tienen mas o menos el mismo BMI.
-
-Los hombres con inestabilidad emocional con respecto a los más estables tienden a:
- 
- * Hacer menos actividad física.
- * Tienen un menor poder adquisitivo.
- * Mayor cantidad de cardiopatías.
- * Tener mayor porcentaje con colesterol alto, presión arterial y diabetes (casi el doble).
 
 Veamos relaciones entre variables: 
 
@@ -492,4 +510,215 @@ dos_scatter_plots_juntos(summary_women_stable_mental_health,
                          "Salud mental estable",
                          "Salud mental no estable")
 ```
+
+PhysAct - BMI
+
+```{r}
+dos_scatter_plots_juntos(summary_men_stable_mental_health,
+                         summary_men_mental_health_problems_10days,
+                         "PhysAct",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+
+<<<<<<< HEAD
+=======
+# 7) Estudio ANOVA entre el IMC y Diabetes_012 
+
+Queremos ver si hay una relación entre el índice de masa corporal (BMI), 
+variable cuantitativa, y la variable cualitativa Diabetes_012_cat.
+Tenemos tres muestras independientes (No diabetes, Prediabetes, 
+Diabetes). En cada muestra tenemos medido el índice de masa corporal. Al ser 
+una variable cuantitativa, miraremos la normalidad con un test 
+Kolmogorov-Smirnov y la homocedasticidad con una prueba de Levene. 
+Suponiendo igualdad en varianzas y normalidad, haremos un test paramétrico ANOVA
+en el que la hipótesis nula será que las medias sean iguales. En caso de no 
+serlo, habrá una relación entre el tipo de diabetes y el IMC. En caso de no 
+normalidad o de no igualdad de varianzas haremos un test no paramétrico de 
+Kruskal-Wallis en el que la hipótesis nula será la de igualdad de distribuciones.
+
+Lo primero que haremos es ver cuál es la media y la desviación estándar de cada
+grupo.
+
+```{r}
+# Media de cada grupo de tipo de diabetes en función del IMC
+aggregate(BMI~Diabetes_012, data = diabetes_df, FUN = mean)
+```
+```{r}
+# Desviación estándar de cada grupo de tipo de diabetes en función del IMC
+aggregate(BMI~Diabetes_012, data = diabetes_df, FUN = sd)
+```
+
+## Normalidad.
+
+Estudio de normalidad
+
+```{r}
+# Diagramas de caja
+boxplot(BMI~Diabetes_012_cat, data = diabetes_df_cat, id.method = "y",
+main = "IMC vs Tipo de Diabetes ", xlab = "Tipo",
+ylab = "IMC",
+col = c("royalblue", "chocolate1", "darkolivegreen3"))
+```
+Vemos que podemos tener una relación entre el IMC y si no hay diabetes y si hay 
+prediabetes o diabetes.
+
+
+```{r}
+# Estudio de normalidad
+par(mfrow=c(1,3))
+qqnorm(diabetes_df[diabetes_df$Diabetes_012==0,"BMI"],main=0)
+qqline(diabetes_df[diabetes_df$Diabetes_012==0,"BMI"])
+qqnorm(diabetes_df[diabetes_df$Diabetes_012==1,"BMI"],main=1)
+qqline(diabetes_df[diabetes_df$Diabetes_012==1,"BMI"])
+qqnorm(diabetes_df[diabetes_df$Diabetes_012==2,"BMI"],main=2)
+qqline(diabetes_df[diabetes_df$Diabetes_012==2,"BMI"])
+```
+No queda claro si tenemos normalidad dedo que en los extremos nos alejamos de la
+linea.
+
+Dado que las muestras son mayores de 30 observaciones, utilizamos un el test 
+Kolmogorov-Smirnov para acabar de ver la normalidad por grupo.
+
+```{r}
+#Test Kolmogorov-Smirnov
+require(nortest)
+by(data=diabetes_df,INDICES =diabetes_df$Diabetes_012,FUN=function(x){lillie.test(x$BMI)})
+```
+
+vemos que el p-valor < 0.05 por lo que rechazamos normalidad.
+
+## Homocedasticidad
+
+Evaluamos la homocedasticidad, la varianza constante entre grupos. El Test de 
+Levene se trata de un test no paramétrico que compara las varianzas basándose en
+la mediana.
+
+```{r}
+# Test Levene diagnosis homocedasticidad
+leveneTest(BMI ~ Diabetes_012_cat, data = diabetes_df_cat, center = "median")
+```
+
+Vemos que el p-valor es significativo por lo que se detecta falta de 
+homocedasticidad. No hay una varianza constante entre los grupos.
+
+## Distribución 
+
+Vemos que forma tiene las distribuciones de los tres grupos
+
+```{r}
+ggplot(data = diabetes_df_cat, mapping = aes(x = BMI, colour = Diabetes_012_cat)) +
+    geom_histogram() +
+    theme_bw() +
+    facet_grid(. ~ Diabetes_012_cat) +
+    theme(legend.position = "none")
+```   
+Se observa que el grupo de 'No Diabetes' tiene una distribución simétrica pero 
+si nos fijamos en los otros dos grupos sus distribuciones son asimétricas con 
+una ligera tendencia hacia la derecha lo que puede indicar que un IMC elevado
+está relacionado con la diabetes.
+
+
+## ANOVA
+A pesar de no cumplirse las condiciones de ANOVA, continuamos con el estudio.
+
+Hipótesis nula: H0: Todas las medias poblacionales son iguales
+
+$$
+H_0: \mu_0 = \mu_1 = \mu_2  
+$$
+Hipótesis alternativa: H1 : no todas las medias son iguales
+
+```{r ANOVA}
+##Estudio ANOVA
+anova_bmi_dia<- aov(diabetes_df$BMI~diabetes_df$Diabetes_012, data=diabetes_df)
+summary(anova_bmi_dia)
+# Gráficos del estudio ANOVA
+par(mfrow=c(2,2))
+plot(anova_bmi_dia)
+```
+
+Claramente tenemos que rechazar la hipótesis nula:
+
+p-valor = 2.e-16 < 0.05. Rechazamos la hipótesis nula Ho.
+
+## Test No Paramétrico
+
+Dado que no hay normalidad ni igualdad de varianzas haremos un test no 
+paramétrico de Kruskal-Wallis en el que la hipótesis nula será la de igualdad de
+distribuciones.
+
+```{r KRUSKAL-WALLIS}
+#Estudio KRUSKAL-WALLIS
+kruskal.test(BMI ~ Diabetes_012_cat, data = diabetes_df_cat)
+```
+
+Rechazamos la hipótesis nula. El test halla significancia en la diferencia de al 
+menos dos grupos.
+
+# 8) Conclusiones
+
+Hemos hecho un estudio para poder relacionar el índice de masa corporal elevado 
+con el hecho de que una persona no padezca diabetes o padezca prediabetes o 
+diabetes.
+
+El estudio no ha sido concluyente. Tan solo hemos podido relacionar el hecho de 
+que los tres grupos tienen una distribución significativamente distinta.
+De las distribuciones hemos podido ver que podría ser ser suceptible que a
+mayor IMC más probabilidades de padecer prediabetes o diabetes pero se debería
+hacer un estudio más profundo como por ejemplo un estudio post-hoc de 
+comparaciones para saber qué dos grupos difieren entre ellos.
+
+En cuanto a la predicción sobre si un dindividuo desarrollará diabetes, hemos con¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas 
+de si un individuo tiene diabetes?
+
+Está bien estudiado que la diabetes tipo II está asociada con
+niveles más altos de BMI juega un factor importante.
+
+## Preguntas propuestas en el sitio web ([KAGGLE](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset)) 
+
+ * ¿Pueden las preguntas de encuesta del BRFSS proporcionar predicciones precisas de si un individuo tiene diabetes?
+
+([BMI alto está asociado a la diabetes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4259868/))
+
+Por lo tanto nos hemos hecho una pregunta: Sería posible que el la salud mental, salario, 
+y la diabetes estén asociados a un BMI más alto? 
+
+Las respuestas han sido las siguientes:  
+
+Por un lado, con las mujeres hemos encontrado que de media, las que tienen más inestabilidad emocional con respecto a las más estables tienden a:
+
+ - Tener menor poder adquisitivo, lo que puede darnos una pista de que su alimentación podría ser de menor calidad.
+ - Hacer menos ejercicio.
+ - Sufrir mayor número de cardiopatías.
+ - Sufren alta presión arterial y colesterol más jóvenes. 
+ - Son diagnosticados con diabetes más jóvenes.
+ - Su BMI es de media más alto.
+ - Sufren mayor percentual de pre y diabetes, alta presión arterial y alto coresterol.
+
+También hemos podido observar que la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
+
+Con relación a las mujeres, encontramos que los hombres:
+
+ - Son más propensos a cardiopatías. 
+ - Tienen una actividad física mayor. 
+ - Tienen mas o menos el mismo BMI.
+
+Los hombres con inestabilidad emocional con respecto a los más estables tienden a:
+ 
+ - Hacer menos actividad física.
+ - Tienen un menor poder adquisitivo.
+ - Mayor cantidad de cardiopatías.
+ - Tener mayor porcentaje con colesterol alto, presión arterial y diabetes (casi el doble).
+
+ * ¿Cuáles son los factores de riesgo más predictivos del riesgo de diabetes?
+
+Hemos hecho varias observaciones y es que también la variable Income influye sobre la cantidad de ejercicio físico
+
+ * ¿Podemos usar un subconjunto de los factores de riesgo para predecir con precisión si un individuo tiene diabetes?
+ * ¿Podemos crear una forma abreviada de preguntas del BRFSS utilizando la selección de características para predecir con precisión si alguien puede tener diabetes o está en alto riesgo de diabetes?
+
+Por lo tanto, nos hemos hecho una pregunta: 
+
 
