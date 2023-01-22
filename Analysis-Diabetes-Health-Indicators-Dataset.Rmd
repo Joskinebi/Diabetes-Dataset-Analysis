@@ -1,0 +1,687 @@
+---
+title: "Analysis of Diabetes Health Indicators / Dataset by Behavioral Risk Factor Surveillance System"
+author: "Sheddad Kaid-Salah Ferrón / Juan José Tirado Pulido"
+note: "The survey was established in 1984. Data are collected monthly in all 50 states, Puerto Rico, the U.S. Virgin islands, and Guam."
+date: "Enero 2023"
+output: 
+  pdf_document: default
+  cleanrmd::html_document_clean: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: water-dark
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r librerías, include=FALSE}
+library(ggplot2)
+library(sqldf)
+library(RSQLite)
+library(scales)
+library(car)
+library(ggpubr)
+```
+
+# 1) Fuente de los Datos
+
+Los datos que hemos utilizado se han sacado de la siguiente fuente:
+
+https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset
+
+El Sistema de Vigilancia de Factores de Riesgo del Comportamiento 
+(BRFSS, por sus siglas en inglés) es una encuesta telefónica relacionada con la 
+salud que los CDC recopilan anualmente. 
+Cada año, la encuesta recopila respuestas de más de 400.000 estadounidenses 
+sobre comportamientos de riesgo relacionados con la salud, condiciones de salud 
+crónicas y el uso de servicios preventivos. 
+Se lleva a cabo todos los años desde 1984. 
+
+Para este proyecto se ha utilizado un archivo csv del conjunto de datos 
+disponible en Kaggle para el año 2015.
+
+Se trata de un estudio en el que la variable a estudiar es la Diabetes_012.
+
+La **diabetes** es una enfermedad crónica grave en la que las personas pierden 
+la capacidad de regular eficazmente los niveles de **glucosa** en la sangre y 
+puede reducir la calidad y la esperanza de vida. 
+Se trata de una enfermedad en la que los niveles de glucosa (azúcar) en sangre 
+están muy altos. La glucosa proviene de los alimentos que ingerimos. 
+La **insulina** es una hormona que ayuda a que la glucosa entre en las células 
+para suministrarles energía. 
+
+La diabetes es una afección de salud crónica que afecta la manera en que el 
+cuerpo humano procesa el azúcar (glucosa). La glucosa es una importante fuente 
+de energía para tu cuerpo, pero necesita la hormona insulina para ayudar a 
+transportarla desde la sangre hasta las células.
+
+Existen dos tipos principales de diabetes: tipo 1 y tipo 2.
+
+La diabetes **tipo 1** es un trastorno autoinmune en el cual el sistema 
+inmunitario del cuerpo ataca y destruye las células del páncreas que producen 
+insulina. Esto resulta en una falta completa de insulina, y las personas con 
+diabetes tipo 1 deben recibir inyecciones de insulina o usar una bomba de 
+insulina para controlar sus niveles de azúcar en sangre.
+
+La diabetes **tipo 2** es la forma más común de diabetes y suele ser causada por
+una combinación de factores genéticos y de estilo de vida, como tener sobrepeso 
+o ser sedentario. En la diabetes tipo 2, las células del cuerpo no responden 
+adecuadamente a la insulina (una condición conocida como resistencia a la 
+insulina) o el páncreas no produce suficiente insulina para satisfacer las 
+necesidades del cuerpo. Las personas con diabetes tipo 2 pueden poder controlar 
+sus niveles de azúcar en sangre con una dieta saludable, ejercicio y 
+medicamentos orales, pero algunas también pueden necesitar inyecciones de 
+insulina.
+
+En ambos casos, los niveles de glucosa permanecen 
+elevados en la sangre.
+
+Esta situación no es deseable ya que con el tiempo el exceso de glucosa en la 
+sangre puede causar graves problemas: 
+
+* Puede dañar los ojos, los riñones y los nervios. 
+* Puede causar enfermedades cardíacas, derrames cerebrales
+* puede causar la necesidad de amputar un miembro (pie diabético).
+* Las mujeres embarazadas también pueden desarrollar diabetes, 
+llamada diabetes gestacional.
+
+# 2) Importación de datos y variables de estudio
+
+Importa los datos del fichero diabetes_012_health_indicators_BRFSS2015.csv, que
+contiene los datos que hemos descrito. Guarda estos datos en un data frame 
+llamado diabetes_csv y muestra  los primeros y últimos registros del conjunto 
+de datos.
+
+```{r}
+# Importamos el fichero 
+diabetes_csv = read.csv("dataset/diabetes_012_health_indicators_BRFSS2015.csv", 
+                     header = TRUE, sep = ",")
+
+# Mostramos los primeros datos
+head(diabetes_csv)
+
+# Mostramos los últimos datos
+tail(diabetes_csv)
+```
+
+## Variables del dataset
+
+ * Diabetes_012: 0 = no diabetes 1 = prediabetes 2 = diabetes
+ 
+ * HighBP: 0 = no high BP 1 = high BP
+ 
+ * HighChol: 0 = no high cholesterol 1 = high cholesterol
+ 
+ * CholCheck: 0 = no cholesterol check in 5 years 1 = yes cholesterol check in 
+ 5 years
+ 
+ * BMI: Body Mass Index
+ 
+ * Smoker: Have you smoked at least 100 cigarettes in your entire life? [Note: 
+ 5 packs = 100 cigarettes] 0 = no 1 = yes            
+ 
+ * Stroke: You ever had a stroke. 0 = no 1 = yes
+ 
+ * HeartDiseaseorAttack: coronary heart disease (CHD) or myocardial infarction 
+ (MI) 0 = no 1 = yes
+ 
+ * PhysActivity: physical activity in past 30 days - not including job 0 = no 
+ 1 = yes
+ 
+ * Fruits: Consume Fruit 1 or more times per day 0 = no 1 = yes
+ 
+ * Veggies: Consume Vegetables 1 or more times per day 0 = no 1 = yes   
+ 
+ * HvyAlcoholConsump: Heavy drinkers (adult men having more than 14 drinks per 
+ week and adult women having more than 7 drinks per week) 0 = no 1 = yes
+ 
+ * AnyHealthcare: Have any kind of health care coverage, including health 
+ insurance, prepaid plans such as HMO, etc. 0 = no 1 = yes
+ 
+ * NoDocbcCost: Was there a time in the past 12 months when you needed to see a 
+ doctor but could not because of cost? 0 = no 1 = yes
+ 
+ * GenHlth: Would you say that in general your health is: scale 1-5 
+ 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
+ 
+ * MentHlth: Now thinking about your mental health, which includes stress, 
+ depression, and problems with emotions, for how many days during the past 30 
+ days was your mental health not good?
+ 
+ * PhysHlth: Now thinking about your physical health, which includes physical 
+ illness and injury, for how many days during the past 30 days was your physical
+ health not good?
+ 
+ * DiffWalk: Do you have serious difficulty walking or climbing stairs? 0 = no 
+ 1 = yes     
+ * Sex: 0 = female 1 = male  
+ 
+ * Age: 13-level age category ([_AGEG5YR](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/AGEG5YR?archive=NAHDAP)) 
+ 
+ * Education: Education level ([EDUCA](https://www.icpsr.umich.edu/web/NAHDAP/studies/34085/datasets/0001/variables/EDUCA?archive=NAHDAP))  
+
+ * Income: Income scale ([INCOME2](https://www.icpsr.umich.edu/web/RCMD/studies/34085/datasets/0001/variables/INCOME2?archive=RCMD)) 
+
+# 3) Exploración y análisis de los datos
+
+Hacemos un data frame con las variables que nos interesan.
+
+```{r}
+# Hacemos un data frame con las variables que nos interesan
+diabetes_df <- sqldf('SELECT Diabetes_012, HighBP, HighChol, BMI, Smoker, 
+                    Stroke, HeartDiseaseorAttack, PhysActivity, 
+                    HvyAlcoholConsump, GenHlth, MentHlth, PhysHlth, Sex, Age, 
+                    Education, Income
+                    FROM diabetes_csv WHERE BMI > 15 AND BMI < 40')
+```
+
+Recodificamos y categorizamos algunas variables de interés.
+
+```{r recodificación}
+# Data frame con las variables categorizadas
+diabetes_df_cat <- diabetes_df
+
+# Diabetes_012
+diabetes_df_cat$Diabetes_012_cat <- recode(diabetes_df_cat$Diabetes_012,
+      "0 = 'No Diabetes' ; 1 = 'Prediabetes'; 2 = 'Diabetes'", as.factor = TRUE)
+# HighBP
+diabetes_df_cat$HighBP_cat <- recode(diabetes_df_cat$HighBP, "0 = 'PA No Alta' ; 
+                                 1 = 'PA Alta'", as.factor = TRUE)
+# HighChol
+diabetes_df_cat$HighChol_cat <- recode(diabetes_df_cat$HighChol,
+           "0 = 'Colesterol No Alto' ; 1 = 'Colesterol Alto'", as.factor = TRUE)
+# Smoker
+diabetes_df_cat$Smoker_cat <- recode(diabetes_df_cat$Smoker, "0 = 'No ha fumado' ; 
+                                 1 = 'Ha fumado'", as.factor = TRUE)
+# Stroke
+diabetes_df_cat$Stroke_cat <- recode(diabetes_df_cat$Stroke, "0 = 'No Derrame Cerebral'; 
+                                 1 = 'Derrame Cerebral'", as.factor = TRUE)
+# HeartDiseaseorAttack
+diabetes_df_cat$HeartDiseaseorAttack_cat <- recode(diabetes_df_cat$HeartDiseaseorAttack,
+                            "0 = 'No Infarto'; 1 = 'Infarto'", as.factor = TRUE)
+# HvyAlcoholConsump
+diabetes_df_cat$HvyAlcoholConsump_cat <- recode(diabetes_df_cat$HvyAlcoholConsump,
+                            "0 = 'No Consumo'; 1 = 'Consumo'", as.factor = TRUE)
+# Sexo
+diabetes_df_cat$Sex_cat <- recode(diabetes_df_cat$Sex,
+                                "0 = 'Mujer' ;1 = 'Hombre'", as.factor = TRUE)
+# Edad
+diabetes_df_cat$Age_cat <- recode(diabetes_df_cat$Age, "1 = 'Edad_18_24'; 
+        2 = 'Edad_25_29'; 3 = 'Edad_30_34'; 4 = 'Edad_35_39'; 5 = 'Edad_40_44';
+        6 = 'Edad_45_49'; 7 = 'Edad_50_54'; 8 = 'Edad_55_59'; 9 = 'Edad_60_64';
+        10 = 'Edad_65_69'; 11 = 'Edad_70_74'; 12 = 'Edad_75_79'; 
+        13 = 'Edad_80_mas'", as.factor = TRUE)
+```
+
+Exploramos el tipo de archivos que se han importado
+
+```{r}
+# Revisamos el tipo de variables
+str(diabetes_df)
+
+#Mostramos los nombres de las variables
+names(diabetes_df)
+
+#Mostramos los primeros datos
+head(diabetes_df)
+
+#Mostramos los últimos datos
+tail(diabetes_df)
+```
+
+# 4) Análisis descriptivo de los datos
+
+Realizamos un análisis descriptivo de los datos.
+
+```{r}
+# Mostramos cuántos valores perdidos hay en la tabla
+table(is.na(diabetes_df))
+
+# Posición de NA por columna (variable)
+apply(is.na(diabetes_df), 2, which)
+
+# Buscamos si hay nulos
+table(is.null(diabetes_df))
+
+# Hacemos un resumen estadístico
+summary(diabetes_df)
+```
+
+Hacemos las gráficas de las variables de interés.
+
+```{r}
+# Estudios Gráficos
+par(mfrow=c(2,3))
+# Diabetes_12
+plot(diabetes_df_cat$Diabetes_012_cat, main = "Tipo de Diabetes",
+     xlab = "Tipo", ylab = "Frecuencia", col = c("deepskyblue1"))
+# BMI
+hist(diabetes_df$BMI, freq = F, main = "Índice de Masa Corporal",
+     xlab = "IMC", ylab = "Frecuencia", col = c("darkolivegreen2"))
+
+# HighBP
+plot(diabetes_df_cat$HighBP_cat, main = "Presión arterial",
+     xlab = "PA", ylab = "Frecuencia", col = c("coral"))
+# HighChol
+plot(diabetes_df_cat$HighChol_cat, main = "Colesterol",
+     xlab = "Colesterol", ylab = "Frecuencia", col = c("cornsilk1"))
+# Age
+plot(diabetes_df_cat$Age_cat, main = "Edad",
+     xlab = "Edad", ylab = "Frecuencia", col = c("darkorchid1"))
+# Sex
+plot(diabetes_df_cat$Sex_cat, main = "Sexo",
+     xlab = "sexo", ylab = "Frecuencia", col = c("aquamarine2"))
+```
+
+# 5) Análisis de datos
+
+## Correlación
+
+Calculamos la matriz de correlación del conjunto de datos y la representación
+gráfica que muestre la relación de todas las variables.
+
+```{r}
+# Calculamos el coeficiente de correlación de Pearson
+cor(x = diabetes_df, method = "pearson")
+```
+Podemos ver que hay algunas pequeñas correlaciones entre ciertas variables.
+
+A pesar de que obtenemos relaciones interesantes nos centramos en las variables 
+que creemos que son relevantes para nuestro estudio.
+
+
+```{r}
+# Realizamos diagramas de puntos de la relación entre variables
+#pairs(~diabetes_df$Diabetes_012 + diabetes_df$BMI + diabetes_df$HighBP + 
+ #       diabetes_df$HighChol + diabetes_df$Sex + diabetes_df$Age + 
+  #      diabetes_df$Education)
+```
+
+## Análisis de regresión
+
+Hacemos un análisis de regresión entre la variable BMI y la variable 
+Diabetes_12.
+
+```{r}
+# modelo lineal de las variables Diabetes_12-BMI
+rm_diabetes_bmi <- lm(BMI~Diabetes_012, data = diabetes_df)
+summary(rm_diabetes_bmi)
+
+# Dibujamos la recta de mínimos cuadrados:
+plot(diabetes_df$Diabetes_012, diabetes_df$BMI, xlab="Tipo diabetes", ylab="BMI")
+abline(rm_diabetes_bmi)
+```
+
+# 6) Estudio Probabilístico
+
+Lo que estamos haciendo ahora es verificar la salud general utilizando la salud mental como una forma para subdividir el conjunto de datos. ¿Por qué elegimos explorar esto? Para entender si una pobre salud mental lleva a trastornos alimentarios, que pueden conducir a patrones poco saludables y finalmente a la diabetes tipo II.
+
+Vamos a estudiar dos conjuntos:
+ * Hombres y mujeres que no sienten emociones negativas. 
+ * Hombres y mujeres que sienten emociones negativas 10 o más días al mes.
+
+```{r}
+#Women with stable mental health = 0 days of no problems.
+women_stable_mental_health <- subset(diabetes_df, 
+                                       diabetes_df$MentHlth == 0 &
+                                       diabetes_df$Sex == 0)
+
+#Women with more or equal than 10 days feeling not good with their mental health
+women_mental_health_problems_more_than_10_days_a_month <-             
+                                       subset(diabetes_df, 
+                                       diabetes_df$MentHlth >= 10 &
+                                       diabetes_df$Sex == 0)
+
+#Men with stable mental health = 0 days of no problems.
+men_stable_mental_health <- subset(diabetes_df, 
+                                        diabetes_df$MentHlth == 0 &
+                                        diabetes_df$Sex == 1)
+
+#Men with more or equal than 10 days feeling not good with their mental health
+men_mental_health_problems_more_than_10_days_a_month <- subset(diabetes_df,
+                              diabetes_df$MentHlth == 0 & diabetes_df$Sex == 1)
+```
+
+Para todos los dataset que hemos generado más arriba, vamos a crear un resumen 
+con la siguiente información: BMI, PhysAct, Cardiopathy, Income, Age. 
+Agrupado por Diab_012, HighBP, HighCol.
+
+```{r}
+diabetes_bp_chol_summary <- function(gender_dataset) {
+  return(paste("
+    SELECT 
+      Diabetes_012 as Diab_012, 
+      HighBP, 
+      HighChol, 
+      ROUND(AVG(BMI), 2) as BMI, 
+      ROUND(AVG(PhysActivity), 2) as PhysAct, 
+      ROUND(AVG(HeartDiseaseorAttack), 2) as Cardiopathy, 
+      ROUND(AVG(Income), 2) as Income, 
+      ROUND(AVG(Age), 2) as Age,   
+      Count(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
+    FROM ", gender_dataset, "
+    GROUP BY Diabetes_012, HighBP, HighChol"))
+}
+```
+
+```{r}
+# Para las mujeres que son estables en cuanto a salud mental
+summary_women_stable_mental_health <- sqldf(
+  diabetes_bp_chol_summary("women_stable_mental_health"))
+
+summary_women_stable_mental_health
+```
+
+
+```{r}
+# Para las mujeres que son menos estables en cuanto a salud mental (más de 10 días al mes con problemas)
+summary_women_mental_health_problems_10days <- sqldf(
+  diabetes_bp_chol_summary("women_mental_health_problems_more_than_10_days_a_month"))
+
+summary_women_mental_health_problems_10days
+```
+
+```{r}
+# Hemos creado una funcion para crear dos scatterplot y meterlos en el mismo 'frame' para poder comparar resultados:
+dos_scatter_plots_juntos <- function(primer_dataset, segundo_dataset, 
+                                     xvalue, yvalue, 
+                                     titulo_primer_scatter, titulo_segundo_scatter) {
+  
+  # Creamos el primer plot
+  primer_plot <- ggplot(primer_dataset, aes_string(x = xvalue, y = yvalue)) +
+    geom_point() +
+    geom_smooth(method = "lm", 
+                se = FALSE, 
+                color = "blue", 
+                linetype = "solid", 
+                size = 1.0) +
+    labs(title = titulo_primer_scatter, 
+         x = xvalue,
+         y = yvalue)
+
+  # Creamos el segundo plot
+  segundo_plot <- ggplot(segundo_dataset, aes_string(x = xvalue, y = yvalue)) +
+    geom_point() +
+    geom_smooth(method = "lm", 
+                se = FALSE, 
+                color = "red", 
+                linetype = "solid", 
+                size = 1.0) +
+    labs(title = titulo_segundo_scatter, 
+         x = xvalue, 
+         y = yvalue)
+
+  # Ponemos los dos plots juntos
+  ggarrange(primer_plot, 
+            segundo_plot,
+            ncol = 2, 
+            align = "h", 
+            common.legend = TRUE, 
+            legend = "bottom")
+}
+```
+ 
+```{r}
+# Relacion Income - BMI en mujeres
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+  
+```{r}
+# Relacion Income - PhysAct en mujeres
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "PhysAct",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+
+
+```{r}
+# Relacion PhysAct - BMI en mujeres
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "PhysAct",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+
+\href{#womenconclusion}{\color{blue}{Conclusiones para el estudio en mujeres}}
+
+```{r}
+# Para los hombres que son estables en cuanto a salud mental
+summary_men_stable_mental_health <- sqldf(
+  diabetes_bp_chol_summary("men_stable_mental_health"))
+
+summary_men_stable_mental_health
+```
+
+```{r}
+# Para los hombres que son menos estables en cuanto a salud mental (más de 10 días al mes con problemas)
+summary_men_mental_health_problems_10days <- sqldf(
+  diabetes_bp_chol_summary("men_mental_health_problems_more_than_10_days_a_month"))
+
+summary_men_mental_health_problems_10days
+```
+
+```{r}
+# Relacion Income - BMI en hombres
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+  
+```{r}
+# Relacion Income - PhysAct en hombres
+dos_scatter_plots_juntos(summary_women_stable_mental_health,
+                         summary_women_mental_health_problems_10days,
+                         "Income",
+                         "PhysAct",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+
+```{r}
+# Relacion PhysAct - BMI en hombres
+dos_scatter_plots_juntos(summary_men_stable_mental_health,
+                         summary_men_mental_health_problems_10days,
+                         "PhysAct",
+                         "BMI",
+                         "Salud mental estable",
+                         "Salud mental no estable")
+```
+
+# [Conclusiones para el estudio en hombres](#menconclusion)
+
+<<<<<<< HEAD
+=======
+# 7) Estudio ANOVA entre el IMC y Diabetes_012 
+
+Queremos ver si hay una relación entre el índice de masa corporal (BMI), 
+variable cuantitativa, y la variable cualitativa Diabetes_012_cat.
+Tenemos tres muestras independientes (No diabetes, Prediabetes, 
+Diabetes). En cada muestra tenemos medido el índice de masa corporal. Al ser 
+una variable cuantitativa, miraremos la normalidad con un test 
+Kolmogorov-Smirnov y la homocedasticidad con una prueba de Levene. 
+Suponiendo igualdad en varianzas y normalidad, haremos un test paramétrico ANOVA
+en el que la hipótesis nula será que las medias sean iguales. En caso de no 
+serlo, habrá una relación entre el tipo de diabetes y el IMC. En caso de no 
+normalidad o de no igualdad de varianzas haremos un test no paramétrico de 
+Kruskal-Wallis en el que la hipótesis nula será la de igualdad de distribuciones.
+
+Lo primero que haremos es ver cuál es la media y la desviación estándar de cada
+grupo.
+
+```{r}
+# Media de cada grupo de tipo de diabetes en función del IMC
+aggregate(BMI~Diabetes_012, data = diabetes_df, FUN = mean)
+```
+```{r}
+# Desviación estándar de cada grupo de tipo de diabetes en función del IMC
+aggregate(BMI~Diabetes_012, data = diabetes_df, FUN = sd)
+```
+
+## Normalidad.
+
+Estudio de normalidad
+
+```{r}
+# Diagramas de caja
+boxplot(BMI~Diabetes_012_cat, data = diabetes_df_cat, id.method = "y",
+main = "IMC vs Tipo de Diabetes ", xlab = "Tipo",
+ylab = "IMC",
+col = c("royalblue", "chocolate1", "darkolivegreen3"))
+```
+Vemos que podemos tener una relación entre el IMC y si no hay diabetes y si hay 
+prediabetes o diabetes.
+
+
+```{r}
+# Estudio de normalidad
+par(mfrow=c(1,3))
+qqnorm(diabetes_df[diabetes_df$Diabetes_012==0,"BMI"],main=0)
+qqline(diabetes_df[diabetes_df$Diabetes_012==0,"BMI"])
+qqnorm(diabetes_df[diabetes_df$Diabetes_012==1,"BMI"],main=1)
+qqline(diabetes_df[diabetes_df$Diabetes_012==1,"BMI"])
+qqnorm(diabetes_df[diabetes_df$Diabetes_012==2,"BMI"],main=2)
+qqline(diabetes_df[diabetes_df$Diabetes_012==2,"BMI"])
+```
+No queda claro si tenemos normalidad dedo que en los extremos nos alejamos de la
+linea.
+
+Dado que las muestras son mayores de 30 observaciones, utilizamos un el test 
+Kolmogorov-Smirnov para acabar de ver la normalidad por grupo.
+
+```{r}
+#Test Kolmogorov-Smirnov
+require(nortest)
+by(data=diabetes_df,INDICES =diabetes_df$Diabetes_012,FUN=function(x){lillie.test(x$BMI)})
+```
+
+vemos que el p-valor < 0.05 por lo que rechazamos normalidad.
+
+## Homocedasticidad
+
+Evaluamos la homocedasticidad, la varianza constante entre grupos. El Test de 
+Levene se trata de un test no paramétrico que compara las varianzas basándose en
+la mediana.
+
+```{r}
+# Test Levene diagnosis homocedasticidad
+leveneTest(BMI ~ Diabetes_012_cat, data = diabetes_df_cat, center = "median")
+```
+
+Vemos que el p-valor es significativo por lo que se detecta falta de 
+homocedasticidad. No hay una varianza constante entre los grupos.
+
+## Distribución 
+
+Vemos que forma tiene las distribuciones de los tres grupos
+
+```{r}
+ggplot(data = diabetes_df_cat, mapping = aes(x = BMI, colour = Diabetes_012_cat)) +
+    geom_histogram() +
+    theme_bw() +
+    facet_grid(. ~ Diabetes_012_cat) +
+    theme(legend.position = "none")
+```   
+Se observa que el grupo de 'No Diabetes' tiene una distribución simétrica pero 
+si nos fijamos en los otros dos grupos sus distribuciones son asimétricas con 
+una ligera tendencia hacia la derecha lo que puede indicar que un IMC elevado
+está relacionado con la diabetes.
+
+
+## ANOVA
+A pesar de no cumplirse las condiciones de ANOVA, continuamos con el estudio.
+
+Hipótesis nula: H0: Todas las medias poblacionales son iguales
+
+$$
+H_0: \mu_0 = \mu_1 = \mu_2  
+$$
+Hipótesis alternativa: H1 : no todas las medias son iguales
+
+```{r ANOVA}
+##Estudio ANOVA
+anova_bmi_dia<- aov(diabetes_df$BMI~diabetes_df$Diabetes_012, data=diabetes_df)
+summary(anova_bmi_dia)
+# Gráficos del estudio ANOVA
+par(mfrow=c(2,2))
+plot(anova_bmi_dia)
+```
+
+Claramente tenemos que rechazar la hipótesis nula:
+
+p-valor = 2.e-16 < 0.05. Rechazamos la hipótesis nula Ho.
+
+## Test No Paramétrico
+
+Dado que no hay normalidad ni igualdad de varianzas haremos un test no 
+paramétrico de Kruskal-Wallis en el que la hipótesis nula será la de igualdad de
+distribuciones.
+
+```{r KRUSKAL-WALLIS}
+#Estudio KRUSKAL-WALLIS
+kruskal.test(BMI ~ Diabetes_012_cat, data = diabetes_df_cat)
+```
+
+Rechazamos la hipótesis nula. El test halla significancia en la diferencia de al 
+menos dos grupos.
+
+# 8) Conclusiones
+
+Hemos hecho un estudio para poder relacionar el índice de masa corporal elevado 
+con el hecho de que una persona no padezca diabetes o padezca prediabetes o 
+diabetes.
+
+El estudio no ha sido concluyente. Tan solo hemos podido relacionar el hecho de 
+que los tres grupos tienen una distribución significativamente distinta.
+De las distribuciones hemos podido ver que podría ser ser suceptible que a
+mayor IMC más probabilidades de padecer prediabetes o diabetes pero se debería
+hacer un estudio más profundo como por ejemplo un estudio post-hoc de 
+comparaciones para saber qué dos grupos difieren entre ellos.
+
+## Relación salud mental, salario, IMC y actividad física (En mujeres) {#womenconclusion} 
+
+Por un lado, con las mujeres hemos encontrado que de media, las que tienen más inestabilidad emocional con respecto a las más estables tienden a:
+
+ - Tener menor poder adquisitivo, lo que puede darnos una pista de que su alimentación podría ser de menor calidad.
+ - Hacer menos ejercicio.
+ - Sufrir mayor número de cardiopatías.
+ - Sufren alta presión arterial y colesterol más jóvenes. 
+ - Son diagnosticados con diabetes más jóvenes.
+ - Su BMI es de media más alto.
+ - Sufren mayor percentual de pre y diabetes, alta presión arterial y alto coresterol.
+
+También hemos podido observar que la edad media juega un factor fundamental en el diagnóstico de la diabetes, ya que cuanto más avanza la edad, más avanzan los problemas de prediabetes/diabetes, presión arterial y colesterol.
+
+## Relación salud mental, salario, IMC y actividad física (En hombres) {#menconclusion}
+
+Con relación a las mujeres, encontramos que los hombres: 
+
+ - Son más propensos a cardiopatías. 
+ - Tienen una actividad física mayor. 
+ - Tienen mas o menos el mismo BMI.
+
+Los hombres con inestabilidad emocional con respecto a los más estables tienden a:
+ 
+ - Hacer menos actividad física.
+ - Tienen un menor poder adquisitivo.
+ - Mayor cantidad de cardiopatías.
+ - Tener mayor porcentaje con colesterol alto, presión arterial y diabetes.
+
+Hemos comprobado en ambos sexos que a mayor cantidad de Income, mayor cantidad 
+de ejercicio físico y menor IMC. 
+\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4259868/}{\color{blue}{Puesto que hemos encontrado un estudio que vincula la diabetes y la obesidad}} podríamos intuir que a mayores problemas mentales, mayor el IMC, por lo tanto mayor la probabilidad de desarrollar diabetes.
+
